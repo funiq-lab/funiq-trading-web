@@ -4,6 +4,13 @@ import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 
 import error404 from "@/assets/404_error.svg";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/i18n/config";
+import type { GetStaticPaths } from "astro";
+
+export const getStaticPaths = (async () =>
+  SUPPORTED_LOCALES.map(locale => ({
+    params: { locale: locale === DEFAULT_LOCALE ? undefined : locale },
+  }))) satisfies GetStaticPaths;
 ---
 
 <BaseLayout>
