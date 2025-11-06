@@ -1,4 +1,3 @@
-import { getCollection } from "astro:content";
 import Fuse, { type FuseResult, type IFuseOptions } from "fuse.js";
 import { useState, useMemo, useEffect } from "react";
 
@@ -17,7 +16,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search as SearchIcon } from "lucide-react";
 
 import type { DocsEntry } from "@/lib/types";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { capitalizeFirstLetter, docs, filterItems } from "@/lib/utils";
+import { DEFAULT_LOCALE } from "@/i18n/config";
+import { translateFor } from "@/i18n/utils";
 
 function extractHeaders(body: string): string[] {
   const headers = [];
@@ -30,8 +31,6 @@ function extractHeaders(body: string): string[] {
   }
   return headers;
 }
-
-const docs: DocsEntry[] = await getCollection("docs");
 
 const options: IFuseOptions<DocsEntry> = {
   includeScore: true,
@@ -69,10 +68,12 @@ const options: IFuseOptions<DocsEntry> = {
   ],
 };
 
-export function Search() {
+export function Search({locale =DEFAULT_LOCALE}: {locale?: string}) {
+  const filteredDocs = filterItems(docs, locale);
+  const t = translateFor(locale)
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const fuse: Fuse<DocsEntry> = useMemo(() => new Fuse(docs, options), [docs]);
+  const fuse: Fuse<DocsEntry> = useMemo(() => new Fuse(filteredDocs, options), [filteredDocs]);
   const results: FuseResult<DocsEntry>[] = useMemo(
     () => fuse.search(searchValue),
     [fuse, searchValue],
@@ -98,13 +99,12 @@ export function Search() {
             <SearchIcon className="w-[1.2rem] h-[1.2rem]" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="md:h-1/2 md:mx-0 w-full h-full">
+        <DialogContent className="max-h-1/2 md:mx-0 w-full p-2" needCloseButton={false}>
           <DialogHeader>
-            <DialogTitle hidden={true}>Search</DialogTitle>
             <DialogDescription asChild className="relative">
-              <div className="mt-6 flex flex-col">
+              <div className="flex flex-col">
                 <Input
-                  placeholder="Search ..."
+                  placeholder={`${t("Search")} ...`}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                 />
@@ -122,7 +122,7 @@ export function Search() {
                             className=" no-underline hover:text-primary-foreground"
                           >
                             {item.data.title
-                              ? capitalizeFirstLetter(item.data.title)
+                              ? item.data.title
                               : capitalizeFirstLetter(item.slug.split("/")[-1])}
                           </a>
                         </li>

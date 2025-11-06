@@ -4,13 +4,15 @@ import type { GetStaticPaths, MarkdownHeading } from "astro";
 
 import DocsLayout from "@/layouts/DocsLayout.astro";
 
-import type { Heading, DocsData, DocsEntry } from "@/lib/types";
+import type { Heading, DocsEntry } from "@/lib/types";
+import { DEFAULT_LOCALE } from "@/i18n/config";
 
 export const getStaticPaths = (async () => {
   const docs: DocsEntry[] = await getCollection(
     "docs",
     (data: DocsEntry) => !data.data.draft
   );
+
   const headings: MarkdownHeading[][] = await Promise.all(
     docs.map((entry) =>
       entry.render().then((data: { headings: any }) => data.headings)
@@ -19,7 +21,7 @@ export const getStaticPaths = (async () => {
 
   const posts = docs.map((entry, index) => {
     return {
-      params: { slug: entry.slug },
+      params: { slug: entry.slug.startsWith(DEFAULT_LOCALE) ? entry.slug.slice(DEFAULT_LOCALE.length + 1) : entry.slug },
       props: { entry, headings: headings[index] },
     };
   });

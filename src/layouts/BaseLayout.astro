@@ -6,13 +6,17 @@ import Footer from "@/components/core/Footer.astro";
 import type { BaseLayoutProps } from "@/lib/types";
 import { capitalizeFirstLetter } from "@/lib/utils";
 
-import { LOCALE, SITE } from "@/config";
+import { SITE } from "@/config";
+import { getLocaleInfo } from "@/i18n/utils";
+import { DEFAULT_LOCALE } from "@/i18n/config";
 
 const { title, description, ogImage } = Astro.props as BaseLayoutProps;
+const locale = Astro.currentLocale;
+const langTag = getLocaleInfo(locale ?? DEFAULT_LOCALE).langTag;
 ---
 
 <!doctype html>
-<html lang=`${LOCALE.lang ?? "en"}` class="scroll-smooth">
+<html lang=`${langTag}` class="scroll-smooth">
   <head>
     <HeadSEO
       title=`${title ? capitalizeFirstLetter(title) : SITE.title}`

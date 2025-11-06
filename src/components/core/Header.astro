@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { docconfig, SITE } from "@/config";
 import { Github } from "simple-icons-astro";
 import { Logo } from "@/components/SiteLogo";
+import LanguagePicker from "./LanguagePicker.astro";
 
 // To pass the tailwindcss classes to the astro component
 const { class: className } = Astro.props;
+const locale = Astro.currentLocale;
 ---
 
 <header
@@ -38,13 +40,16 @@ const { class: className } = Astro.props;
           <Logo className="size-[2rem]" />
         </Button>
       </a>
-      <div class="flex-1">
+      <div class="flex-1 hidden md:block">
         <NavMenu />
       </div>
     </div>
 
     <div class="flex flex-row gap-2">
-      {!docconfig.hide_search && <Search client:only="react" />}
+      <div class="flex-1 md:hidden block">
+        <HamNavMenu />
+      </div>
+      {!docconfig.hide_search && <Search client:only="react" locale={locale} />}
       {
         !docconfig.hide_repo_button && (
           <a href={SITE.repo} target="_blank">
@@ -56,7 +61,11 @@ const { class: className } = Astro.props;
       }
 
       <div class="flex-row gap-4 flex">
-        <ModeToggle client:load transition:persist />
+        <LanguagePicker />
+      </div>
+
+      <div class="flex-row gap-4 flex">
+        <ModeToggle client:load transition:persist locale={locale} />
       </div>
     </div>
   </div>

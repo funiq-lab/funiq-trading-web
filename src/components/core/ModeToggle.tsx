@@ -9,8 +9,11 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { Moon, Sun } from "lucide-react";
+import { DEFAULT_LOCALE } from "@/i18n/config";
+import { translateFor } from "@/i18n/utils";
 
-export function ModeToggle() {
+export function ModeToggle({locale = DEFAULT_LOCALE}: {locale?: string}) {
+  const t= translateFor(locale);
   const [theme, setThemeState] = React.useState<
     "theme-light" | "dark" | "system"
   >("theme-light");
@@ -35,19 +38,19 @@ export function ModeToggle() {
           <Button variant="ghost" size="icon">
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+            <span className="sr-only">{t("toggle_theme")}</span>
           </Button>
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setThemeState("theme-light")}>
-          Light
+          {t("light")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setThemeState("dark")}>
-          Dark
+          {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setThemeState("system")}>
-          System
+          {t("system")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -3,6 +3,7 @@ import rehypeExternalLinks from "rehype-external-links";
 import tailwind from "@astrojs/tailwind";
 import react from "@astrojs/react";
 import mdx from "@astrojs/mdx";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "./src/i18n/config";
 
 import sitemap from "@astrojs/sitemap";
 
@@ -29,8 +30,8 @@ export default defineConfig({
     prefetch: true,
   },
   i18n: {
-    locales: ["en", "zh-CN"],
-    defaultLocale: "zh-CN",
+    locales: SUPPORTED_LOCALES,
+    defaultLocale: DEFAULT_LOCALE,
   },
   integrations: [react(), tailwind({
     applyBaseStyles: false,

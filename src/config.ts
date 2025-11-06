@@ -1,4 +1,5 @@
 import type { SocialObjects } from "@/lib/types";
+import { DEFAULT_LOCALE, type LocaleKey } from "./i18n/config";
 
 export const SITE = {
   website: "https://www.funiq-trading.funiqlab.com",
@@ -9,27 +10,16 @@ export const SITE = {
   repo: "https://github.com/funiq-lab/funiq-trading-web",
 };
 
-export const LOCALE = {
-  lang: "zh-CN", // html lang code. Set this empty and default will be "en"
-  langTag: ["en-EN", "zh-CN"], // BCP 47 Language Tags. Set this empty [] to use the environment default
-} as const;
-
-export const menu_items: { title: string; href: string }[] = [
+export const menuItems: { titleKey: string; href: string }[] = [
   {
-    title: "Docs",
-    href: "/getting-started",
+    titleKey: "docs",
+    href: "/getting-started/introduction",
   },
 ];
 
 // Just works with top-level folders and files. For files, don't add extension as it looks for the slug, and not the file name.
-export const side_nav_menu_order: string[] = [
+export const sideNavMenuOrder: string[] = [
   "getting-started",
-  "guides",
-  "guides/pages",
-  "guides/table-of-contents",
-  "guides/sidebar-navigation",
-  "custom-components",
-  "reference",
 ];
 
 // Don't delete anything. You can use 'true' or 'false'.

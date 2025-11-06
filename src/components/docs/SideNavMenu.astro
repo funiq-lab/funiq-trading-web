@@ -1,5 +1,5 @@
 ---
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { capitalizeFirstLetter, matchPath } from "@/lib/utils";
 import type { SideNavMenuProps } from "@/lib/types";
 
 const { items, level } = Astro.props as SideNavMenuProps;
@@ -19,7 +19,7 @@ const { class: className } = Astro.props;
           : capitalizeFirstLetter(item.slug.split("/").pop() || "");
         const className = `
         ${level === 0 ? "font-semibold" : "text-muted-foreground"}
-        ${pathname === "/" + item.slug ? "text-primary" : "no-underline"}
+        ${matchPath(pathname, item.slug) ? "text-primary underline" : ""}
         `.trim();
         return (
           <li class="w-full">
