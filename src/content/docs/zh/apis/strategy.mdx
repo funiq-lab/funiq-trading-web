@@ -1,0 +1,885 @@
+---
+title: 策略接口
+hide_breadcrumbs: false
+---
+
+### 1. 创建策略挂单
+
+`POST` /strategy/pending-orders
+
+创建单个策略挂单，将挂单信息提交到指定策略实例的订单队列中。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求体
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+strategy_id | string | 是 | 策略实例ID
+pending_order_info | object | 是 | 挂单详细信息（JSON对象）
+
+#### 请求示例
+
+```bash
+curl --location --request POST 'http://localhost:8080/strategy/pending-orders' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "strategy_id": "strategy_001",
+  "pending_order_info": {
+    "security_code": "000001",
+    "price": 12.50,
+    "quantity": 1000,
+    "side": 0,
+    "trigger_condition": "price_above",
+    "trigger_value": 12.45
+  }
+}'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+message | string | 操作消息
+strategy_id | string | 策略实例ID
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "message": "Strategy pending order created successfully",
+    "strategy_id": "strategy_001"
+  }
+}
+```
+
+---
+
+### 2. 批量创建策略挂单
+
+`POST` /strategy/batch-pending-orders
+
+批量创建多个策略挂单，一次性将多个挂单提交到指定策略实例的订单队列中。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求体
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+strategy_id | string | 是 | 策略实例ID
+pending_orders | array | 是 | 挂单信息数组（最多1000个）
+
+#### 请求示例
+
+```bash
+curl --location --request POST 'http://localhost:8080/strategy/batch-pending-orders' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "strategy_id": "strategy_001",
+  "pending_orders": [
+    {
+      "security_code": "000001",
+      "price": 12.50,
+      "quantity": 1000,
+      "side": 0
+    },
+    {
+      "security_code": "600000",
+      "price": 8.80,
+      "quantity": 2000,
+      "side": 0
+    }
+  ]
+}'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+strategy_id | string | 策略实例ID
+total | int | 创建的挂单总数
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "strategy_id": "strategy_001",
+    "total": 2
+  }
+}
+```
+
+---
+
+### 3. 查询策略挂单列表
+
+`GET` /strategy/pending-orders
+
+批量查询策略挂单列表，支持多条件筛选和分页。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+strategy_id | string | 否 | 策略实例ID（不填则查询所有）
+start_time | int64 | 否 | 开始时间（毫秒时间戳）
+end_time | int64 | 否 | 结束时间（毫秒时间戳）
+limit | int | 否 | 返回记录数限制（默认100，最大1000）
+offset | int | 否 | 偏移量（默认0）
+order_by | string | 否 | 排序字段（如：create_time）
+desc | bool | 否 | 是否降序排序（true/false）
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/pending-orders?strategy_id=strategy_001&limit=50&order_by=create_time&desc=true' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+records | array | 挂单记录数组
+total_count | int | 总记录数
+returned_count | int | 返回记录数
+has_more | bool | 是否还有更多数据
+
+**records 数组元素：**
+
+名称 | 类型 | 描述
+---|---|---
+id | int64 | 挂单ID
+strategy_id | string | 策略实例ID
+status | int | 挂单状态（1-待触发，2-已触发，3-已取消，4-已执行）
+pending_order_info | object | 挂单详细信息
+create_time | int64 | 创建时间（微秒）
+update_time | int64 | 更新时间（微秒）
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "records": [
+      {
+        "id": 1001,
+        "strategy_id": "strategy_001",
+        "status": 1,
+        "pending_order_info": {
+          "security_code": "000001",
+          "price": 12.50,
+          "quantity": 1000,
+          "side": 0,
+          "trigger_condition": "price_above",
+          "trigger_value": 12.45
+        },
+        "create_time": 1699261200000,
+        "update_time": 1699261200000
+      },
+      {
+        "id": 1002,
+        "strategy_id": "strategy_001",
+        "status": 2,
+        "pending_order_info": {
+          "security_code": "600000",
+          "price": 8.80,
+          "quantity": 2000,
+          "side": 0
+        },
+        "create_time": 1699261300000,
+        "update_time": 1699261350000
+      }
+    ],
+    "total_count": 2,
+    "returned_count": 2,
+    "has_more": false
+  }
+}
+```
+
+---
+
+### 4. 查询单个策略挂单
+
+`GET` /strategy/pending-order
+
+根据挂单ID查询单个策略挂单的详细信息。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+id | int64 | 是 | 挂单ID
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/pending-order?id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 挂单数据
+id | int64 | 挂单ID
+strategy_id | string | 策略实例ID
+status | int | 挂单状态
+pending_order_info | object | 挂单详细信息
+create_time | int64 | 创建时间（毫秒）
+update_time | int64 | 更新时间（毫秒）
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 1001,
+    "strategy_id": "strategy_001",
+    "status": 1,
+    "pending_order_info": {
+      "security_code": "000001",
+      "price": 12.50,
+      "quantity": 1000,
+      "side": 0,
+      "trigger_condition": "price_above",
+      "trigger_value": 12.45
+    },
+    "create_time": 1699261200000,
+    "update_time": 1699261200000
+  }
+}
+```
+
+---
+
+### 5. 更新策略挂单
+
+`PUT` /strategy/pending-order
+
+更新指定ID的策略挂单信息。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+id | int64 | 是 | 挂单ID
+
+#### 请求体
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+strategy_id | string | 是 | 策略实例ID
+pending_order_info | object | 是 | 更新后的挂单信息
+
+#### 请求示例
+
+```bash
+curl --location --request PUT 'http://localhost:8080/strategy/pending-order?id=1001' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "strategy_id": "strategy_001",
+  "pending_order_info": {
+    "security_code": "000001",
+    "price": 12.60,
+    "quantity": 1500,
+    "side": 0,
+    "trigger_condition": "price_above",
+    "trigger_value": 12.55
+  }
+}'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+message | string | 操作消息
+strategy_id | string | 策略实例ID
+order_id | int64 | 挂单ID
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "message": "Strategy pending order updated successfully",
+    "strategy_id": "strategy_001",
+    "order_id": 1001
+  }
+}
+```
+
+---
+
+### 6. 取消策略挂单
+
+`PUT` /strategy/pending-order/cancel
+
+取消指定ID的策略挂单。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+id | int64 | 是 | 挂单ID
+
+#### 请求示例
+
+```bash
+curl --location --request PUT 'http://localhost:8080/strategy/pending-order/cancel?id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+message | string | 操作消息
+strategy_id | string | 策略实例ID
+cancelled_order_id | int64 | 已取消的挂单ID
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "message": "Strategy pending order cancelled successfully",
+    "strategy_id": "strategy_001",
+    "cancelled_order_id": 1001
+  }
+}
+```
+
+---
+
+### 7. 删除策略挂单
+
+`DELETE` /strategy/pending-order
+
+删除指定ID的策略挂单。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+id | int64 | 是 | 挂单ID
+
+#### 请求示例
+
+```bash
+curl --location --request DELETE 'http://localhost:8080/strategy/pending-order?id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+message | string | 操作消息
+strategy_id | string | 策略实例ID
+deleted_order_id | int64 | 已删除的挂单ID
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "message": "Strategy pending order deleted successfully",
+    "strategy_id": "strategy_001",
+    "deleted_order_id": 1001
+  }
+}
+```
+
+---
+
+### 8. 查询策略订单列表
+
+`GET` /strategy/orders
+
+批量查询策略订单列表，支持多条件筛选和分页。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+strategy_id | string | 否 | 策略实例ID（不填则查询所有）
+security_code | string | 否 | 证券代码
+pending_order_id | int64 | 否 | 关联的挂单ID
+market | int | 否 | 市场类型
+status | int | 否 | 订单状态
+start_time | int64 | 否 | 开始时间（毫秒时间戳）
+end_time | int64 | 否 | 结束时间（毫秒时间戳）
+limit | int | 否 | 返回记录数限制（默认100，最大1000）
+offset | int | 否 | 偏移量（默认0）
+order_by | string | 否 | 排序字段（如：order_time）
+desc | bool | 否 | 是否降序排序（true/false）
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/orders?strategy_id=strategy_001&security_code=000001&limit=50&order_by=order_time&desc=true' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+records | array | 订单记录数组
+total_count | int | 总记录数
+returned_count | int | 返回记录数
+has_more | bool | 是否还有更多数据
+
+**records 数组元素：**
+
+名称 | 类型 | 描述
+---|---|---
+id | int64 | 记录ID
+pending_order_id | int64 | 关联的挂单ID
+strategy_id | string | 策略实例ID
+pending_submit_time | int64 | 挂单提交时间（毫秒）
+security_code | string | 证券代码
+order_id | int64 | 订单ID
+exchange_order_id | string | 交易所订单ID
+batch_id | int64 | 批次ID
+side | int | 买卖方向
+sign | int | 开平标志
+order_type | int | 订单类型
+status | int | 订单状态
+status_msg | string | 状态消息
+price | double | 委托价格
+qty | int64 | 委托数量
+leaves_qty | int64 | 剩余数量
+cum_qty | int64 | 累计成交数量
+avg_price | double | 成交均价
+cum_amt | double | 累计成交金额
+order_time | int64 | 委托时间（微秒）
+update_time | int64 | 更新时间（微秒）
+create_time | int64 | 创建时间（微秒）
+error_code | int | 错误码
+error_msg | string | 错误消息
+login_id | string | 登录账号ID
+cust_id | string | 客户ID
+fund_account_id | string | 资金账号ID
+account_id | string | 账户ID
+pending_order_info | object | 挂单详细信息
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "records": [
+      {
+        "id": 2001,
+        "pending_order_id": 1001,
+        "strategy_id": "strategy_001",
+        "pending_submit_time": 1699261200000,
+        "security_code": "000001",
+        "order_id": 20001,
+        "exchange_order_id": "E123456789",
+        "batch_id": 0,
+        "side": 0,
+        "sign": 0,
+        "order_type": 0,
+        "status": 2,
+        "status_msg": "filled",
+        "price": 12.50,
+        "qty": 1000,
+        "leaves_qty": 0,
+        "cum_qty": 1000,
+        "avg_price": 12.48,
+        "cum_amt": 12480.0,
+        "order_time": 1699261205000000,
+        "update_time": 1699261210000000,
+        "create_time": 1699261200000000,
+        "error_code": 0,
+        "error_msg": "",
+        "login_id": "123456",
+        "cust_id": "C123456",
+        "fund_account_id": "F123456",
+        "account_id": "A123456",
+        "pending_order_info": {
+          "security_code": "000001",
+          "price": 12.50,
+          "quantity": 1000,
+          "side": 0
+        }
+      }
+    ],
+    "total_count": 1,
+    "returned_count": 1,
+    "has_more": false
+  }
+}
+```
+
+---
+
+### 9. 查询单个策略订单
+
+`GET` /strategy/order
+
+根据订单ID查询单个策略订单的详细信息。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+order_id | int64 | 是 | 订单ID
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/order?order_id=20001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 订单数据（字段同"查询策略订单列表"中的records元素）
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 2001,
+    "pending_order_id": 1001,
+    "strategy_id": "strategy_001",
+    "pending_submit_time": 1699261200000,
+    "security_code": "000001",
+    "order_id": 20001,
+    "exchange_order_id": "E123456789",
+    "batch_id": 0,
+    "side": 0,
+    "sign": 0,
+    "order_type": 0,
+    "status": 2,
+    "status_msg": "filled",
+    "price": 12.50,
+    "qty": 1000,
+    "leaves_qty": 0,
+    "cum_qty": 1000,
+    "avg_price": 12.48,
+    "cum_amt": 12480.0,
+    "order_time": 1699261205000000,
+    "update_time": 1699261210000000,
+    "create_time": 1699261200000000,
+    "error_code": 0,
+    "error_msg": "",
+    "login_id": "123456",
+    "cust_id": "C123456",
+    "fund_account_id": "F123456",
+    "account_id": "A123456",
+    "pending_order_info": {
+      "security_code": "000001",
+      "price": 12.50,
+      "quantity": 1000,
+      "side": 0
+    }
+  }
+}
+```
+
+---
+
+### 10. 查询挂单关联订单
+
+`GET` /strategy/orders-by-pending-order
+
+根据挂单ID查询该挂单关联的所有订单。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+pending_order_id | int64 | 是 | 挂单ID
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/orders-by-pending-order?pending_order_id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+pending_order_id | int64 | 挂单ID
+orders | array | 订单数组
+count | int | 订单数量
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "pending_order_id": 1001,
+    "orders": [
+      {
+        "id": 2001,
+        "pending_order_id": 1001,
+        "strategy_id": "strategy_001",
+        "security_code": "000001",
+        "order_id": 20001,
+        "status": 2,
+        "status_msg": "filled",
+        "price": 12.50,
+        "qty": 1000,
+        "cum_qty": 1000,
+        "avg_price": 12.48,
+        "order_time": 1699261205000000
+      }
+    ],
+    "count": 1
+  }
+}
+```
+
+---
+
+### 11. 查询挂单及关联订单
+
+`GET` /strategy/pending-orders-with-orders
+
+查询策略挂单及其关联的所有订单（联表查询）。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+strategy_id | string | 否 | 策略实例ID（不填则查询所有）
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/pending-orders-with-orders?strategy_id=strategy_001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 响应数据
+pending_orders_with_orders | array | 挂单及关联订单数组
+count | int | 记录数量
+strategy_id | string | 策略实例ID（如果指定）
+
+**pending_orders_with_orders 数组元素：**
+
+名称 | 类型 | 描述
+---|---|---
+pending_order | object | 挂单信息
+orders | array | 关联的订单数组
+order_count | int | 订单数量
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "strategy_id": "strategy_001",
+    "pending_orders_with_orders": [
+      {
+        "pending_order": {
+          "id": 1001,
+          "strategy_id": "strategy_001",
+          "status": 2,
+          "pending_order_info": {
+            "security_code": "000001",
+            "price": 12.50,
+            "quantity": 1000,
+            "side": 0
+          },
+          "create_time": 1699261200000,
+          "update_time": 1699261350000
+        },
+        "orders": [
+          {
+            "id": 2001,
+            "pending_order_id": 1001,
+            "strategy_id": "strategy_001",
+            "security_code": "000001",
+            "order_id": 20001,
+            "status": 2,
+            "status_msg": "filled",
+            "price": 12.50,
+            "qty": 1000,
+            "cum_qty": 1000,
+            "avg_price": 12.48,
+            "order_time": 1699261205000000
+          }
+        ],
+        "order_count": 1
+      },
+      {
+        "pending_order": {
+          "id": 1002,
+          "strategy_id": "strategy_001",
+          "status": 1,
+          "pending_order_info": {
+            "security_code": "600000",
+            "price": 8.80,
+            "quantity": 2000,
+            "side": 0
+          },
+          "create_time": 1699261300000,
+          "update_time": 1699261300000
+        },
+        "orders": [],
+        "order_count": 0
+      }
+    ],
+    "count": 2
+  }
+}
+```

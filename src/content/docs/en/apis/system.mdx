@@ -1,0 +1,401 @@
+---
+title: System API
+hide_breadcrumbs: false
+---
+
+### 1. Health check
+
+`GET` /system/health
+
+Check the health status of system services (quote, trade, strategy), including running state and connectivity.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Example request
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/health' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Health status data
+timestamp | int64 | Check timestamp (seconds)
+services | object | Details for each service
+services.quote | object | Quote service status
+services.quote.running | boolean | Whether running
+services.quote.connected | boolean | Whether connected
+services.quote.healthy | boolean | Healthy (running and connected)
+services.trade | object | Trade service status
+services.trade.running | boolean | Whether running
+services.trade.connected | boolean | Whether connected
+services.trade.healthy | boolean | Healthy (running and connected)
+services.strategy | object | Strategy service status
+services.strategy.running | boolean | Whether running
+services.strategy.initialized | boolean | Whether initialized
+services.strategy.healthy | boolean | Healthy (running and initialized)
+overall_status | string | Overall status: "healthy" or "unhealthy"
+
+##### Response example (healthy)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"timestamp": 1699261200,
+		"services": {
+			"quote": {
+				"running": true,
+				"connected": true,
+				"healthy": true
+			},
+			"trade": {
+				"running": true,
+				"connected": true,
+				"healthy": true
+			},
+			"strategy": {
+				"running": true,
+				"initialized": true,
+				"healthy": true
+			}
+		},
+		"overall_status": "healthy"
+	}
+}
+```
+
+##### Response example (unhealthy)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"timestamp": 1699261200,
+		"services": {
+			"quote": {
+				"running": true,
+				"connected": false,
+				"healthy": false
+			},
+			"trade": {
+				"running": false,
+				"connected": false,
+				"healthy": false
+			},
+			"strategy": {
+				"running": false,
+				"initialized": false,
+				"healthy": false
+			}
+		},
+		"overall_status": "unhealthy"
+	}
+}
+```
+
+---
+
+### 2. Start all services
+
+`POST` /system/start
+
+Start all system services (quote, trade, strategy) in dependency order: quote -> trade -> strategy. The start process waits for services to be ready and injects required dependencies.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Example request
+
+```bash
+curl --location --request POST 'http://localhost:8080/system/start' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Start result data
+services | object | Start details per service
+services.quote | object | Quote service start result
+services.quote.attempted | boolean | Whether start was attempted
+services.quote.started | boolean | Whether started successfully
+services.quote.running | boolean | Currently running
+services.quote.connected | boolean | Connected
+services.trade | object | Trade service start result
+services.trade.attempted | boolean | Whether start was attempted
+services.trade.started | boolean | Whether started successfully
+services.trade.running | boolean | Currently running
+services.trade.connected | boolean | Connected
+services.strategy | object | Strategy service start result
+services.strategy.attempted | boolean | Whether start was attempted
+services.strategy.started | boolean | Whether started successfully
+services.strategy.running | boolean | Currently running
+overall_result | string | Overall result: "success" or "partial_failure"
+message | string | Result description
+
+##### Response example (all started)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"services": {
+			"quote": {
+				"attempted": true,
+				"started": true,
+				"running": true,
+				"connected": true
+			},
+			"trade": {
+				"attempted": true,
+				"started": true,
+				"running": true,
+				"connected": true
+			},
+			"strategy": {
+				"attempted": true,
+				"started": true,
+				"running": true
+			}
+		},
+		"overall_result": "success",
+		"message": "All services started successfully"
+	}
+}
+```
+
+##### Response example (partial failure)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"services": {
+			"quote": {
+				"attempted": true,
+				"started": true,
+				"running": true,
+				"connected": true
+			},
+			"trade": {
+				"attempted": true,
+				"started": false,
+				"running": false,
+				"connected": false
+			},
+			"strategy": {
+				"attempted": true,
+				"started": false,
+				"running": false
+			}
+		},
+		"overall_result": "partial_failure",
+		"message": "Some services failed to start"
+	}
+}
+```
+
+---
+
+### 3. Stop all services
+
+`POST` /system/stop
+
+Stop all system services (quote, trade, strategy) in reverse-dependency order: strategy -> trade -> quote.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Example request
+
+```bash
+curl --location --request POST 'http://localhost:8080/system/stop' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Stop result data
+services | object | Stop details per service
+services.quote | object | Quote service stop result
+services.quote.attempted | boolean | Whether stop was attempted
+services.quote.stopped | boolean | Whether stopped successfully
+services.quote.running | boolean | Whether still running
+services.trade | object | Trade service stop result
+services.trade.attempted | boolean | Whether stop was attempted
+services.trade.stopped | boolean | Whether stopped successfully
+services.trade.running | boolean | Whether still running
+services.strategy | object | Strategy service stop result
+services.strategy.attempted | boolean | Whether stop was attempted
+services.strategy.stopped | boolean | Whether stopped successfully
+services.strategy.running | boolean | Whether still running
+overall_result | string | Overall result: "success" or "partial_failure"
+message | string | Result description
+
+##### Response example (all stopped)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"services": {
+			"strategy": {
+				"attempted": true,
+				"stopped": true,
+				"running": false
+			},
+			"trade": {
+				"attempted": true,
+				"stopped": true,
+				"running": false
+			},
+			"quote": {
+				"attempted": true,
+				"stopped": true,
+				"running": false
+			}
+		},
+		"overall_result": "success",
+		"message": "All services stopped successfully"
+	}
+}
+```
+
+---
+
+### 4. Get service status
+
+`GET` /system/status
+
+Retrieve detailed status information for each service, including running/connected state, error messages, and instance counts.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Example request
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/status' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Status data
+timestamp | int64 | Query timestamp (seconds)
+services | object | Service details
+services.quote | object | Quote service status
+services.quote.running | boolean | Whether running
+services.quote.connected | boolean | Whether connected
+services.quote.parser_id | string | Parser identifier
+services.quote.last_error | string | Last error message
+services.trade | object | Trade service status
+services.trade.running | boolean | Whether running
+services.trade.connected | boolean | Whether connected
+services.trade.interface_id | string | Interface identifier
+services.trade.logged_in_accounts | int | Number of logged-in accounts
+services.trade.total_accounts | int | Total accounts
+services.trade.last_error | string | Last error message
+services.strategy | object | Strategy service status
+services.strategy.running | boolean | Whether running
+services.strategy.initialized | boolean | Whether initialized
+services.strategy.active_instances | int | Active instances count
+services.strategy.last_error | string | Last error message
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"timestamp": 1699261200,
+		"services": {
+			"quote": {
+				"running": true,
+				"connected": true,
+				"parser_id": "SH_PARSER_001",
+				"last_error": ""
+			},
+			"trade": {
+				"running": true,
+				"connected": true,
+				"interface_id": "TRADE_IF_001",
+				"logged_in_accounts": 2,
+				"total_accounts": 3,
+				"last_error": ""
+			},
+			"strategy": {
+				"running": true,
+				"initialized": true,
+				"active_instances": 5,
+				"last_error": ""
+			}
+		}
+	}
+}
+```
+
+---
+
+### 5. List all accounts
+
+`GET` /system/accounts
+
+Get a list of all trading accounts in the system, including account ID, fund account, login status, etc.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Example request
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/accounts' \
+--header 'Content-Type: application/json'
+```

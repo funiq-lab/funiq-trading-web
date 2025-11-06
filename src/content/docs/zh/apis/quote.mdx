@@ -1,0 +1,451 @@
+---
+title: 行情接口
+hide_breadcrumbs: false
+---
+
+### 1. 查询深度行情
+
+`GET` /quote/depth
+
+获取指定证券的十档深度行情数据，包括买卖十档价格和数量、基本价格信息、成交信息等。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+security_code | string | 是 | 证券代码，6 位数字格式<br />**示例值**："000001"<br />**数据校验规则**：<br />- 长度必须为 6 位<br />- 只能包含数字字符
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/quote/depth?security_code=000001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 深度行情数据
+security_code | string | 证券代码
+security_name | string | 证券名称（可选）
+market | int | 市场类型
+timestamp | int64 | 数据时间戳（微秒）
+update_time | int64 | 更新时间（HHMMSSMMM格式）
+trading_phase | int | 交易阶段
+instrument_status | int | 合约状态
+last_price | double | 最新价
+pre_close_price | double | 昨收价
+open_price | double | 开盘价
+high_price | double | 最高价
+low_price | double | 最低价
+close_price | double | 收盘价
+upper_limit_price | double | 涨停价
+lower_limit_price | double | 跌停价
+avg_price | double | 均价
+total_volume | int64 | 总成交量
+total_value | double | 总成交额
+num_trades | int | 成交笔数
+total_bid_qty | int64 | 委买总量
+total_ask_qty | int64 | 委卖总量
+weighted_avg_bid_price | double | 加权平均委买价格
+weighted_avg_ask_price | double | 加权平均委卖价格
+total_bid_number | int | 委买总笔数
+total_ask_number | int | 委卖总笔数
+bid_price | array | 十档买入价格数组
+bid_qty | array | 十档买入数量数组
+ask_price | array | 十档卖出价格数组
+ask_qty | array | 十档卖出数量数组
+total_position | int64 | 持仓总量
+reference_price | double | 参考价
+iopv | double | 实时净值
+pre_iopv | double | 前日净值
+channel_no | int | 频道号
+sequence | int64 | 序列号
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "security_code": "000001",
+    "security_name": "平安银行",
+    "market": 1,
+    "timestamp": 1699261200000000,
+    "update_time": 133000100,
+    "trading_phase": 1,
+    "instrument_status": 0,
+    "last_price": 12.34,
+    "pre_close_price": 12.00,
+    "open_price": 12.10,
+    "high_price": 12.80,
+    "low_price": 11.90,
+    "close_price": 12.34,
+    "upper_limit_price": 13.20,
+    "lower_limit_price": 10.80,
+    "avg_price": 12.20,
+    "total_volume": 123456789,
+    "total_value": 1500000000.0,
+    "num_trades": 98765,
+    "total_bid_qty": 654320,
+    "total_ask_qty": 543210,
+    "weighted_avg_bid_price": 12.25,
+    "weighted_avg_ask_price": 12.28,
+    "total_bid_number": 1200,
+    "total_ask_number": 1100,
+    "bid_price": [12.30, 12.29, 12.28, 12.27, 12.26, 12.25, 12.24, 12.23, 12.22, 12.21],
+    "bid_qty": [1000, 2000, 1500, 1200, 800, 600, 500, 400, 300, 200],
+    "ask_price": [12.35, 12.36, 12.37, 12.38, 12.39, 12.40, 12.41, 12.42, 12.43, 12.44],
+    "ask_qty": [900, 1800, 1400, 1100, 700, 550, 450, 350, 250, 150],
+    "total_position": 0,
+    "reference_price": 12.00,
+    "iopv": 0.0,
+    "pre_iopv": 0.0,
+    "channel_no": 1,
+    "sequence": 123456789
+  }
+}
+```
+
+### 2. 查询指数数据
+
+`GET` /quote/index
+
+获取指定指数的基本数据，包括指数值、成交信息等。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+security_code | string | 是 | 证券代码，6 位数字格式<br />**示例值**："000001"<br />**数据校验规则**：<br />- 长度必须为 6 位<br />- 只能包含数字字符
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/quote/index?security_code=000001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 指数数据
+security_code | string | 证券代码
+security_name | string | 证券名称
+market | int | 市场类型
+timestamp | int64 | 数据时间戳（微秒）
+update_time | int64 | 更新时间（HHMMSSMMM格式，如093015123表示09:30:15.123）
+trading_phase | int | 交易阶段
+last_index | double | 最新指数
+pre_close_index | double | 昨收指数
+open_index | double | 开盘指数
+high_index | double | 最高指数
+low_index | double | 最低指数
+close_index | double | 收盘指数
+total_volume | int64 | 总成交量
+total_value | double | 总成交额
+num_trades | int | 成交笔数
+sequence | int64 | 序列号
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "security_code": "000001",
+    "security_name": "上证指数",
+    "market": 1,
+    "timestamp": 1699261200000000,
+    "update_time": 093015123,
+    "trading_phase": 1,
+    "last_index": 3500.12,
+    "pre_close_index": 3490.00,
+    "open_index": 3495.00,
+    "high_index": 3510.00,
+    "low_index": 3480.00,
+    "close_index": 3500.12,
+    "total_volume": 100000000,
+    "total_value": 5000000000.0,
+    "num_trades": 200000,
+    "sequence": 987654321
+  }
+}
+```
+
+---
+
+### 3. 查询五十档深度
+
+`GET` /quote/depth-fifty
+
+获取指定证券的五十档深度行情，包含更详细的委托明细（最多 100 笔委托，买卖各 50 笔）。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+security_code | string | 是 | 证券代码，6 位数字格式<br />**示例值**："000001"<br />**数据校验规则**：<br />- 长度必须为 6 位<br />- 只能包含数字字符
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/quote/depth-fifty?security_code=000001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 五十档深度数据
+security_code | string | 证券代码
+security_name | string | 证券名称
+market | int | 市场类型
+timestamp | int64 | 数据时间戳（微秒）
+update_time | int64 | 更新时间（HHMMSSMMM格式，如093015123表示09:30:15.123）
+bid_price | double | 买一价
+bid_qty | int64 | 买一量
+bid_num_orders | int | 买一笔数
+bid_show_orders | int | 买一展示笔数
+ask_price | double | 卖一价
+ask_qty | int64 | 卖一量
+ask_num_orders | int | 卖一笔数
+ask_show_orders | int | 卖一展示笔数
+orders | array | 委托明细数组（最多 100 笔）
+channel_no | int | 频道号
+sequence | int64 | 序列号
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "security_code": "000001",
+    "security_name": "平安银行",
+    "market": 1,
+    "timestamp": 1699261200000000,
+    "update_time": 093015123,
+    "bid_price": 12.30,
+    "bid_qty": 1000,
+    "bid_num_orders": 5,
+    "bid_show_orders": 5,
+    "ask_price": 12.35,
+    "ask_qty": 900,
+    "ask_num_orders": 4,
+    "ask_show_orders": 4,
+    "orders": [
+      100, 200, 150, 120, 80, 60, 50, 40, 30, 20,
+      90, 180, 140, 110, 70, 55, 45, 35, 25, 15
+    ],
+    "channel_no": 1,
+    "sequence": 123456790
+  }
+}
+```
+
+---
+
+### 4. 查询委托数据
+
+`GET` /quote/entrust
+
+获取指定证券的最新委托数据，包含委托的详细信息。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+security_code | string | 是 | 证券代码，6 位数字格式<br />**示例值**："000001"<br />**数据校验规则**：<br />- 长度必须为 6 位<br />- 只能包含数字字符
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/quote/entrust?security_code=000001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 委托数据
+security_code | string | 证券代码
+security_name | string | 证券名称
+market | int | 市场类型
+timestamp | int64 | 数据时间戳（微秒）
+transact_time | int64 | 委托时间（微秒）
+order_type | string | 委托类型
+side | string | 买卖方向
+bs_flag | string | 买卖标志（B/S）
+order_no | string | 委托编号
+order_index | int | 委托索引
+price | double | 委托价格
+qty | int64 | 委托数量
+balance | int64 | 剩余数量
+channel_no | int | 频道号
+biz_index | int64 | 业务索引
+appl_seq_num | int64 | 应用序号
+sequence | int64 | 序列号
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "security_code": "000001",
+    "security_name": "平安银行",
+    "market": 1,
+    "timestamp": 1699261200000000,
+    "transact_time": 1699261200500000,
+    "order_type": "limit",
+    "side": "buy",
+    "bs_flag": "B",
+    "order_no": "B123456789",
+    "order_index": 1001,
+    "price": 12.30,
+    "qty": 1000,
+    "balance": 1000,
+    "channel_no": 1,
+    "biz_index": 10001,
+    "appl_seq_num": 50001,
+    "sequence": 123456791
+  }
+}
+```
+
+---
+
+### 5. 查询成交数据
+
+`GET` /quote/trade
+
+获取指定证券的最新成交数据，包含成交的详细信息。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+security_code | string | 是 | 证券代码，6 位数字格式<br />**示例值**："000001"<br />**数据校验规则**：<br />- 长度必须为 6 位<br />- 只能包含数字字符
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/quote/trade?security_code=000001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 成交数据
+security_code | string | 证券代码
+security_name | string | 证券名称
+market | int | 市场类型
+timestamp | int64 | 数据时间戳（微秒）
+transact_time | int64 | 成交时间（微秒）
+trade_id | string | 成交编号
+trade_index | int | 成交索引
+price | double | 成交价格
+qty | int64 | 成交数量
+value | double | 成交金额
+bid_order_no | string | 买方委托编号
+ask_order_no | string | 卖方委托编号
+bid_appl_seq_num | int64 | 买方应用序号
+ask_appl_seq_num | int64 | 卖方应用序号
+exec_type | string | 执行类型
+trade_flag | int | 成交标志
+channel_no | int | 频道号
+biz_index | int64 | 业务索引
+appl_seq_num | int64 | 应用序号
+sequence | int64 | 序列号
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "security_code": "000001",
+    "security_name": "平安银行",
+    "market": 1,
+    "timestamp": 1699261200000000,
+    "transact_time": 1699261200600000,
+    "trade_id": "T123456789",
+    "trade_index": 1001,
+    "price": 12.32,
+    "qty": 2000,
+    "value": 24640.0,
+    "bid_order_no": "B123456789",
+    "ask_order_no": "S987654321",
+    "bid_appl_seq_num": 50001,
+    "ask_appl_seq_num": 50002,
+    "exec_type": "trade",
+    "trade_flag": 0,
+    "channel_no": 1,
+    "biz_index": 10002,
+    "appl_seq_num": 60001,
+    "sequence": 123456792
+  }
+}
+```

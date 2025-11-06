@@ -13,8 +13,6 @@ import type {
 import { menuItems, sideNavMenuOrder } from "@/config";
 import {
   DEFAULT_LOCALE,
-  SUPPORTED_LOCALES,
-  type LocaleKey,
 } from "@/i18n/config";
 import { getSlugWithoutLocale, isLocaleKey, translateFor } from "@/i18n/utils";
 import { UnsupportedLocale } from "@/i18n/errors";

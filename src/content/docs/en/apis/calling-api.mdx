@@ -1,0 +1,132 @@
+---
+title: Calling API
+hide_breadcrumbs: false
+---
+
+## Prerequisites
+
+- Ensure the network service (HTTP server) is running and reachable at: `http://{HTTP_SERVER_ADDRESS}:{HTTP_SERVER_PORT}`.
+- Before calling a specific endpoint, the related subsystem must be running (for example: the quote subsystem for market data endpoints, the trade subsystem for trading endpoints).
+- Use JSON encoding and include the following headers when sending requests:
+	- `Accept: application/json`
+	- `Content-Type: application/json` (for POST/PUT requests with a body)
+
+> Note: This application currently runs only on users' internal networks. The HTTP layer does not implement authentication tokens. For security, do not expose your IP address to the public Internet.
+
+## Examples
+
+The examples below demonstrate common calling patterns and can be copied directly from the documentation.
+
+### Query depth market data (GET /quote/depth)
+
+Query the top ten price levels (depth) for a security using the `security_code` query parameter:
+
+```bash
+curl -X GET 'http://127.0.0.1:8080/quote/depth?security_code=600000' \
+	-H 'Accept: application/json'
+```
+
+Note: `security_code` is passed as a URL query parameter.
+
+### Place a buy order (POST /trade/buy)
+
+Place a buy order by total amount. The server will fetch the market price and calculate the actual quantity to place.
+
+Example request body (JSON):
+
+```json
+{
+	"login_id": "user_123",
+	"security_code": "600000",
+	"amount": 10000
+}
+```
+
+cURL example:
+
+```bash
+curl -X POST 'http://127.0.0.1:8080/trade/buy' \
+	-H 'Content-Type: application/json' \
+	-H 'Accept: application/json' \
+	-d '{"login_id":"user_123","security_code":"600000","amount":10000}'
+```
+
+## Response format
+
+Most endpoints use a unified response envelope: `{ code, message, data }`.
+
+- `code`: business status code (string). Success is `0`.
+- `message`: human-readable status or error description (do not rely on this for programmatic checks).
+- `data`: the endpoint's payload (business data on success, usually `null` on failure).
+
+Success example:
+
+```json
+{
+	"code": "0",
+	"message": "Success",
+	"data": { /* specific business data */ }
+}
+```
+
+Failure example:
+
+```json
+{
+	"code": "A0201",
+	"message": "Missing required parameter: security_code",
+	"data": null
+}
+```
+
+Please rely on `code` to determine success or failure, not the `message` field.
+
+## Error responses
+
+The project maintains a set of business error codes:
+
+| Error code | Default message |
+|---:|---|
+| `0` | Success |
+| `A0001` | Internal Server Error |
+| `A0002` | Service Unavailable |
+| `A0003` | System Timeout |
+| `A0101` | Unauthorized |
+| `A0102` | Permission Denied |
+| `A0201` | Invalid Argument |
+| `A0202` | Invalid Format |
+| `A0203` | Missing Required Field |
+| `A0204` | Parameter Out of Range |
+| `A0205` | Invalid JSON Format |
+| `A0206` | Invalid Request Method |
+| `A0207` | Invalid Content Type |
+| `A0301` | Resource not found |
+| `A0302` | Database error |
+| `A0401` | Operation not allowed |
+
+Error responses may include additional context in the `data` field (for example `details` or an error path). Refer to each endpoint's documentation for specifics.
+
+Error response example:
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+	"code": "A0201",
+	"message": "Invalid argument",
+	"data": {
+		"details": "Missing required parameter: security_code"
+	}
+}
+```
+
+
+## API docs
+
+- [System API](/en/apis/system)
+- [Quote API](/en/apis/quote)
+- [Trade API](/en/apis/trade)
+- [Strategy API](/en/apis/strategy)
+
+

@@ -15,6 +15,7 @@ const ENLocale: I18nStrings = {
   'search': 'Search',
   docs: "Docs",
   'paths.getting-started': 'Getting Started',
+  'paths.apis': 'APIs',
   "a11y.languagePicker": "Select language",
   "footer.builtBy": "Built by",
   "footer.sourceCode": "The source code is available on",

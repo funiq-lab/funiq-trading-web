@@ -1,0 +1,499 @@
+---
+title: Strategy API
+hide_breadcrumbs: false
+---
+
+### 1. Create a strategy pending order
+
+`POST` /strategy/pending-orders
+
+Create a single strategy pending order by submitting the pending order info to the target strategy instance's order queue.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Request body
+
+Name | Type | Required | Description
+---|---|---|---
+strategy_id | string | yes | Strategy instance ID
+pending_order_info | object | yes | Pending order details (JSON object)
+
+#### Example request
+
+```bash
+curl --location --request POST 'http://localhost:8080/strategy/pending-orders' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+	"strategy_id": "strategy_001",
+	"pending_order_info": {
+		"security_code": "000001",
+		"price": 12.50,
+		"quantity": 1000,
+		"side": 0,
+		"trigger_condition": "price_above",
+		"trigger_value": 12.45
+	}
+}'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Response payload
+message | string | Operation message
+strategy_id | string | Strategy instance ID
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"message": "Strategy pending order created successfully",
+		"strategy_id": "strategy_001"
+	}
+}
+```
+
+---
+
+### 2. Batch create strategy pending orders
+
+`POST` /strategy/batch-pending-orders
+
+Create multiple strategy pending orders in batch and submit them to the target strategy instance's order queue.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Request body
+
+Name | Type | Required | Description
+---|---|---|---
+strategy_id | string | yes | Strategy instance ID
+pending_orders | array | yes | Array of pending order objects (max 1000)
+
+#### Example request
+
+```bash
+curl --location --request POST 'http://localhost:8080/strategy/batch-pending-orders' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+	"strategy_id": "strategy_001",
+	"pending_orders": [
+		{
+			"security_code": "000001",
+			"price": 12.50,
+			"quantity": 1000,
+			"side": 0
+		},
+		{
+			"security_code": "600000",
+			"price": 8.80,
+			"quantity": 2000,
+			"side": 0
+		}
+	]
+}'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Response payload
+strategy_id | string | Strategy instance ID
+total | int | Total number of created pending orders
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"strategy_id": "strategy_001",
+		"total": 2
+	}
+}
+```
+
+---
+
+### 3. List strategy pending orders
+
+`GET` /strategy/pending-orders
+
+Query the list of strategy pending orders with filtering and pagination support.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Query parameters
+
+Name | Type | Required | Description
+---|---|---|---
+strategy_id | string | no | Strategy instance ID (omit to query all)
+start_time | int64 | no | Start time (ms timestamp)
+end_time | int64 | no | End time (ms timestamp)
+limit | int | no | Record limit (default 100, max 1000)
+offset | int | no | Offset (default 0)
+order_by | string | no | Sort field (e.g. create_time)
+desc | bool | no | Descending order (true/false)
+
+#### Example request
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/pending-orders?strategy_id=strategy_001&limit=50&order_by=create_time&desc=true' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Response payload
+records | array | Array of pending order records
+total_count | int | Total records
+returned_count | int | Returned records count
+has_more | bool | Whether more data exists
+
+Records element fields:
+
+Name | Type | Description
+---|---|---
+id | int64 | Pending order ID
+strategy_id | string | Strategy instance ID
+status | int | Pending order status (1-pending trigger, 2-triggered, 3-cancelled, 4-executed)
+pending_order_info | object | Pending order details
+create_time | int64 | Created time (microseconds)
+update_time | int64 | Updated time (microseconds)
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"records": [
+			{
+				"id": 1001,
+				"strategy_id": "strategy_001",
+				"status": 1,
+				"pending_order_info": {
+					"security_code": "000001",
+					"price": 12.50,
+					"quantity": 1000,
+					"side": 0,
+					"trigger_condition": "price_above",
+					"trigger_value": 12.45
+				},
+				"create_time": 1699261200000,
+				"update_time": 1699261200000
+			},
+			{
+				"id": 1002,
+				"strategy_id": "strategy_001",
+				"status": 2,
+				"pending_order_info": {
+					"security_code": "600000",
+					"price": 8.80,
+					"quantity": 2000,
+					"side": 0
+				},
+				"create_time": 1699261300000,
+				"update_time": 1699261350000
+			}
+		],
+		"total_count": 2,
+		"returned_count": 2,
+		"has_more": false
+	}
+}
+```
+
+---
+
+### 4. Get a single pending order
+
+`GET` /strategy/pending-order
+
+Retrieve detailed information for a single pending order by ID.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Query parameters
+
+Name | Type | Required | Description
+---|---|---|---
+id | int64 | yes | Pending order ID
+
+#### Example request
+
+```bash
+curl --location --request GET 'http://localhost:8080/strategy/pending-order?id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Pending order data
+id | int64 | Pending order ID
+strategy_id | string | Strategy instance ID
+status | int | Pending order status
+pending_order_info | object | Pending order details
+create_time | int64 | Created time (ms)
+update_time | int64 | Updated time (ms)
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"id": 1001,
+		"strategy_id": "strategy_001",
+		"status": 1,
+		"pending_order_info": {
+			"security_code": "000001",
+			"price": 12.50,
+			"quantity": 1000,
+			"side": 0,
+			"trigger_condition": "price_above",
+			"trigger_value": 12.45
+		},
+		"create_time": 1699261200000,
+		"update_time": 1699261200000
+	}
+}
+```
+
+---
+
+### 5. Update a pending order
+
+`PUT` /strategy/pending-order
+
+Update the pending order information for a specified ID.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Query parameters
+
+Name | Type | Required | Description
+---|---|---|---
+id | int64 | yes | Pending order ID
+
+#### Request body
+
+Name | Type | Required | Description
+---|---|---|---
+strategy_id | string | yes | Strategy instance ID
+pending_order_info | object | yes | Updated pending order info
+
+#### Example request
+
+```bash
+curl --location --request PUT 'http://localhost:8080/strategy/pending-order?id=1001' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+	"strategy_id": "strategy_001",
+	"pending_order_info": {
+		"security_code": "000001",
+		"price": 12.60,
+		"quantity": 1500,
+		"side": 0,
+		"trigger_condition": "price_above",
+		"trigger_value": 12.55
+	}
+}'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Response payload
+message | string | Operation message
+strategy_id | string | Strategy instance ID
+order_id | int64 | Pending order ID
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"message": "Strategy pending order updated successfully",
+		"strategy_id": "strategy_001",
+		"order_id": 1001
+	}
+}
+```
+
+---
+
+### 6. Cancel a pending order
+
+`PUT` /strategy/pending-order/cancel
+
+Cancel the pending order with the specified ID.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Query parameters
+
+Name | Type | Required | Description
+---|---|---|---
+id | int64 | yes | Pending order ID
+
+#### Example request
+
+```bash
+curl --location --request PUT 'http://localhost:8080/strategy/pending-order/cancel?id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Response payload
+message | string | Operation message
+strategy_id | string | Strategy instance ID
+cancelled_order_id | int64 | Cancelled pending order ID
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"message": "Strategy pending order cancelled successfully",
+		"strategy_id": "strategy_001",
+		"cancelled_order_id": 1001
+	}
+}
+```
+
+---
+
+### 7. Delete a pending order
+
+`DELETE` /strategy/pending-order
+
+Delete the pending order with the specified ID.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Query parameters
+
+Name | Type | Required | Description
+---|---|---|---
+id | int64 | yes | Pending order ID
+
+#### Example request
+
+```bash
+curl --location --request DELETE 'http://localhost:8080/strategy/pending-order?id=1001' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Response payload
+message | string | Operation message
+strategy_id | string | Strategy instance ID
+deleted_order_id | int64 | Deleted pending order ID
+
+##### Response example
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"message": "Strategy pending order deleted successfully",
+		"strategy_id": "strategy_001",
+		"deleted_order_id": 1001
+	}
+}
+```
+
+---
+
+### 8. List strategy orders
+
+`GET` /strategy/orders
+
+Query strategy orders with filtering and pagination support.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"

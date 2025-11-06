@@ -1,0 +1,130 @@
+---
+title: 调用 API
+hide_breadcrumbs: false
+---
+
+## 前提条件
+
+- 确保网络服务（HTTP server）已启动并可以访问：`http://{HTTP_SERVER_ADDRESS}:{HTTP_SERVER_PORT}`。
+- 调用特定接口前，对应的子系统必须处于运行状态（例如：行情接口需要 `quote` 运行，交易接口需要 `trade` 运行）。
+- 使用 JSON 编码，发送请求时请带上：
+  - `Accept: application/json`
+  - `Content-Type: application/json`（针对带请求体的 POST/PUT）
+
+> 注意：目前本应用仅运行在用户内网，HTTP 层没有实现鉴权令牌，安全起见，请不要暴露自己IP地址到外网。
+
+## 调用示例
+
+以下示例演示常见的调用方式，便于在文档页直接复制使用。
+
+### 查询深度行情（GET /quote/depth）
+
+查询证券的前十档深度，使用查询参数 `security_code`：
+
+```bash
+curl -X GET 'http://127.0.0.1:8080/quote/depth?security_code=600000' \
+  -H 'Accept: application/json'
+```
+
+说明：`security_code` 作为查询参数放在 URL 中。
+
+### 下买单（POST /trade/buy）
+
+按总金额下买单，服务器会从行情获取当前价格并计算实际下单数量。
+
+请求体示例（JSON）：
+
+```json
+{
+  "login_id": "user_123",
+  "security_code": "600000",
+  "amount": 10000
+}
+```
+
+curl 示例：
+
+```bash
+curl -X POST 'http://127.0.0.1:8080/trade/buy' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -d '{"login_id":"user_123","security_code":"600000","amount":10000}'
+```
+
+## 响应结果
+
+绝大多数接口的响应体采用统一封装：`{ code, message, data }`。
+
+- `code`：业务状态码（字符串），成功为 `0`。
+- `message`：可读的错误或状态描述（不应作为程序判断依据）。
+- `data`：接口返回的具体内容（成功时的业务负载，失败时通常为 `null`）。
+
+成功响应示例：
+
+```json
+{
+  "code": "0",
+  "message": "Success",
+  "data": { /* 具体业务数据 */ }
+}
+```
+
+失败响应示例：
+
+```json
+{
+  "code": "A0201",
+  "message": "Missing required parameter: security_code",
+  "data": null
+}
+```
+
+请**不要**依赖 `message` 字段来判定请求是否成功，应以 `code` 为准。
+
+## 错误响应说明
+
+项目维护了一套业务错误码
+
+| 错误码 | 默认消息 |
+|---:|---|
+| `0` | Success |
+| `A0001` | Internal Server Error |
+| `A0002` | Service Unavailable |
+| `A0003` | System Timeout |
+| `A0101` | Unauthorized |
+| `A0102` | Permission Denied |
+| `A0201` | Invalid Argument |
+| `A0202` | Invalid Format |
+| `A0203` | Missing Required Field |
+| `A0204` | Parameter Out of Range |
+| `A0205` | Invalid JSON Format |
+| `A0206` | Invalid Request Method |
+| `A0207` | Invalid Content Type |
+| `A0301` | Resource not found |
+| `A0302` | Database error |
+| `A0401` | Operation not allowed |
+
+错误响应里可能包含 `data` 字段用于提供额外的上下文（例如 `details`、错误路径等），具体请参考对应接口介绍。
+
+错误响应结构（示例）
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "code": "A0201",
+  "message": "Invalid argument",
+  "data": {
+    "details": "Missing required parameter: security_code"
+  }
+}
+```
+  
+
+## 接口文档
+
+- [系统接口](/apis/system)
+- [行情接口](/apis/quote)
+- [交易接口](/apis/trade)
+- [策略接口](/apis/strategy)

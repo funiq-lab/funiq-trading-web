@@ -126,6 +126,11 @@ a {
   @apply hover:text-primary;
 }
 
+.prose a {
+  @apply underline underline-offset-4;
+
+}
+
 blockquote {
   @apply mt-6 border-l-2 pl-6 italic border-primary;
 }
@@ -232,6 +237,10 @@ td {
 
 .prose h4 {
   @apply mt-3;
+}
+
+.prose h5 {
+  @apply mt-2;
 }
 
 .prose details {

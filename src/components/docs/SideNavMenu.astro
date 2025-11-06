@@ -1,6 +1,7 @@
 ---
 import { capitalizeFirstLetter, matchPath } from "@/lib/utils";
 import type { SideNavMenuProps } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const { items, level } = Astro.props as SideNavMenuProps;
 const pathname: string = new URL(Astro.request.url).pathname;
@@ -23,12 +24,12 @@ const { class: className } = Astro.props;
         `.trim();
         return (
           <li class="w-full">
-            <a
+            {item.children.length <= 0 ? (<a
               href={`/${item.slug}`}
-              class={`${className}  text-sm leading-none w-full`}
+              class={cn(className, "text-sm leading-none w-full")}
             >
               {label}
-            </a>
+            </a>) : (<span class={cn(className, "text-sm leading-none w-full")}>{label}</span>)}
             {item.children.length > 0 && (
               <Astro.self items={item.children} level={level + 1} />
             )}

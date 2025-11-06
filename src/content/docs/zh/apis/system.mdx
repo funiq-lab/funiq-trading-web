@@ -1,0 +1,563 @@
+---
+title: 系统接口
+hide_breadcrumbs: false
+---
+
+### 1. 健康检查
+
+`GET` /system/health
+
+检查系统各个服务（行情、交易、策略）的健康状态，包括服务运行状态、连接状态等。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/health' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 健康状态数据
+timestamp | int64 | 检查时间戳（秒）
+services | object | 各服务状态详情
+services.quote | object | 行情服务状态
+services.quote.running | boolean | 是否运行中
+services.quote.connected | boolean | 是否已连接
+services.quote.healthy | boolean | 是否健康（运行且已连接）
+services.trade | object | 交易服务状态
+services.trade.running | boolean | 是否运行中
+services.trade.connected | boolean | 是否已连接
+services.trade.healthy | boolean | 是否健康（运行且已连接）
+services.strategy | object | 策略服务状态
+services.strategy.running | boolean | 是否运行中
+services.strategy.initialized | boolean | 是否已初始化
+services.strategy.healthy | boolean | 是否健康（运行且已初始化）
+overall_status | string | 整体状态，值为 "healthy" 或 "unhealthy"
+
+##### 响应体示例（健康状态）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "timestamp": 1699261200,
+    "services": {
+      "quote": {
+        "running": true,
+        "connected": true,
+        "healthy": true
+      },
+      "trade": {
+        "running": true,
+        "connected": true,
+        "healthy": true
+      },
+      "strategy": {
+        "running": true,
+        "initialized": true,
+        "healthy": true
+      }
+    },
+    "overall_status": "healthy"
+  }
+}
+```
+
+##### 响应体示例（非健康状态）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "timestamp": 1699261200,
+    "services": {
+      "quote": {
+        "running": true,
+        "connected": false,
+        "healthy": false
+      },
+      "trade": {
+        "running": false,
+        "connected": false,
+        "healthy": false
+      },
+      "strategy": {
+        "running": false,
+        "initialized": false,
+        "healthy": false
+      }
+    },
+    "overall_status": "unhealthy"
+  }
+}
+```
+
+---
+
+### 2. 启动所有服务
+
+`POST` /system/start
+
+启动系统的所有服务（行情、交易、策略），按照依赖顺序启动：先启动行情服务，然后交易服务，最后启动策略服务。启动过程会等待各服务就绪并注入必要的依赖指针。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求示例
+
+```bash
+curl --location --request POST 'http://localhost:8080/system/start' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 启动结果数据
+services | object | 各服务启动详情
+services.quote | object | 行情服务启动结果
+services.quote.attempted | boolean | 是否尝试启动
+services.quote.started | boolean | 是否启动成功
+services.quote.running | boolean | 当前是否运行中
+services.quote.connected | boolean | 是否已连接
+services.trade | object | 交易服务启动结果
+services.trade.attempted | boolean | 是否尝试启动
+services.trade.started | boolean | 是否启动成功
+services.trade.running | boolean | 当前是否运行中
+services.trade.connected | boolean | 是否已连接
+services.strategy | object | 策略服务启动结果
+services.strategy.attempted | boolean | 是否尝试启动
+services.strategy.started | boolean | 是否启动成功
+services.strategy.running | boolean | 当前是否运行中
+overall_result | string | 整体结果，值为 "success" 或 "partial_failure"
+message | string | 结果描述信息
+
+##### 响应体示例（全部启动成功）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "services": {
+      "quote": {
+        "attempted": true,
+        "started": true,
+        "running": true,
+        "connected": true
+      },
+      "trade": {
+        "attempted": true,
+        "started": true,
+        "running": true,
+        "connected": true
+      },
+      "strategy": {
+        "attempted": true,
+        "started": true,
+        "running": true
+      }
+    },
+    "overall_result": "success",
+    "message": "All services started successfully"
+  }
+}
+```
+
+##### 响应体示例（部分启动失败）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "services": {
+      "quote": {
+        "attempted": true,
+        "started": true,
+        "running": true,
+        "connected": true
+      },
+      "trade": {
+        "attempted": true,
+        "started": false,
+        "running": false,
+        "connected": false
+      },
+      "strategy": {
+        "attempted": true,
+        "started": false,
+        "running": false
+      }
+    },
+    "overall_result": "partial_failure",
+    "message": "Some services failed to start"
+  }
+}
+```
+
+---
+
+### 3. 停止所有服务
+
+`POST` /system/stop
+
+停止系统的所有服务（行情、交易、策略），按照逆依赖顺序停止：先停止策略服务，然后交易服务，最后停止行情服务。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求示例
+
+```bash
+curl --location --request POST 'http://localhost:8080/system/stop' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 停止结果数据
+services | object | 各服务停止详情
+services.quote | object | 行情服务停止结果
+services.quote.attempted | boolean | 是否尝试停止
+services.quote.stopped | boolean | 是否停止成功
+services.quote.running | boolean | 当前是否仍在运行
+services.trade | object | 交易服务停止结果
+services.trade.attempted | boolean | 是否尝试停止
+services.trade.stopped | boolean | 是否停止成功
+services.trade.running | boolean | 当前是否仍在运行
+services.strategy | object | 策略服务停止结果
+services.strategy.attempted | boolean | 是否尝试停止
+services.strategy.stopped | boolean | 是否停止成功
+services.strategy.running | boolean | 当前是否仍在运行
+overall_result | string | 整体结果，值为 "success" 或 "partial_failure"
+message | string | 结果描述信息
+
+##### 响应体示例（全部停止成功）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "services": {
+      "strategy": {
+        "attempted": true,
+        "stopped": true,
+        "running": false
+      },
+      "trade": {
+        "attempted": true,
+        "stopped": true,
+        "running": false
+      },
+      "quote": {
+        "attempted": true,
+        "stopped": true,
+        "running": false
+      }
+    },
+    "overall_result": "success",
+    "message": "All services stopped successfully"
+  }
+}
+```
+
+---
+
+### 4. 查询服务状态
+
+`GET` /system/status
+
+获取系统各个服务的详细状态信息，包括运行状态、连接状态、错误信息、实例数量等。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/status' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 状态数据
+timestamp | int64 | 查询时间戳（秒）
+services | object | 各服务状态详情
+services.quote | object | 行情服务状态
+services.quote.running | boolean | 是否运行中
+services.quote.connected | boolean | 是否已连接
+services.quote.parser_id | string | 解析器标识符
+services.quote.last_error | string | 最后错误信息
+services.trade | object | 交易服务状态
+services.trade.running | boolean | 是否运行中
+services.trade.connected | boolean | 是否已连接
+services.trade.interface_id | string | 接口标识符
+services.trade.logged_in_accounts | int | 已登录账户数量
+services.trade.total_accounts | int | 总账户数量
+services.trade.last_error | string | 最后错误信息
+services.strategy | object | 策略服务状态
+services.strategy.running | boolean | 是否运行中
+services.strategy.initialized | boolean | 是否已初始化
+services.strategy.active_instances | int | 活跃实例数量
+services.strategy.last_error | string | 最后错误信息
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "timestamp": 1699261200,
+    "services": {
+      "quote": {
+        "running": true,
+        "connected": true,
+        "parser_id": "SH_PARSER_001",
+        "last_error": ""
+      },
+      "trade": {
+        "running": true,
+        "connected": true,
+        "interface_id": "TRADE_IF_001",
+        "logged_in_accounts": 2,
+        "total_accounts": 3,
+        "last_error": ""
+      },
+      "strategy": {
+        "running": true,
+        "initialized": true,
+        "active_instances": 5,
+        "last_error": ""
+      }
+    }
+  }
+}
+```
+
+---
+
+### 5. 查询所有账户信息
+
+`GET` /system/accounts
+
+获取系统中所有交易账户的基本信息列表，包括账户 ID、资金账号、登录状态等。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/accounts' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 账户数据
+accounts | array | 账户信息数组
+accounts[].login_id | string | 登录账号
+accounts[].cust_id | string | 客户编号
+accounts[].fund_account_id | string | 资金账号
+accounts[].account_id_sh | string | 上海交易所账户
+accounts[].account_id_sz | string | 深圳交易所账户
+accounts[].is_logged_in | boolean | 是否已登录
+total_count | int | 总账户数量
+logged_in_count | int | 已登录账户数量
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "accounts": [
+      {
+        "login_id": "user001",
+        "cust_id": "CUST123456",
+        "fund_account_id": "FUND001",
+        "account_id_sh": "A123456789",
+        "account_id_sz": "0123456789",
+        "is_logged_in": true
+      },
+      {
+        "login_id": "user002",
+        "cust_id": "CUST789012",
+        "fund_account_id": "FUND002",
+        "account_id_sh": "A987654321",
+        "account_id_sz": "0987654321",
+        "is_logged_in": true
+      }
+    ],
+    "total_count": 2,
+    "logged_in_count": 2
+  }
+}
+```
+
+---
+
+### 6. 查询账户详情
+
+`GET` /system/accounts/detail
+
+获取指定交易账户的详细信息，包括账户基本信息和资金信息（沪市和深市）。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+login_id | string | 是 | 登录账号<br />**示例值**："user001"
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/accounts/detail?login_id=user001' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 账户详情数据
+account | object | 账户信息
+account.login_id | string | 登录账号
+account.cust_id | string | 客户编号
+account.fund_account_id | string | 资金账号
+account.account_id_sh | string | 上海交易所账户
+account.account_id_sz | string | 深圳交易所账户
+account.is_logged_in | boolean | 是否已登录
+account.funds | array | 资金信息数组（沪市和深市）
+account.funds[].market | string | 市场（"SH" 或 "SZ"）
+account.funds[].account_id | string | 交易账户
+account.funds[].total_asset | double | 总资产
+account.funds[].available_balance | double | 可用余额
+account.funds[].frozen_balance | double | 冻结资金
+account.funds[].fetch_balance | double | 可取资金
+account.funds[].market_value | double | 市值
+account.funds[].total_profit | double | 总盈亏
+account.funds[].unrealized_profit | double | 浮动盈亏
+account.funds[].buying_power | double | 购买力
+account.funds[].withdraw_quota | double | 可提取额度
+account.funds[].commission | double | 手续费
+account.funds[].stamp_tax | double | 印花税
+account.funds[].transfer_fee | double | 过户费
+
+##### 响应体示例
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "account": {
+      "login_id": "user001",
+      "cust_id": "CUST123456",
+      "fund_account_id": "FUND001",
+      "account_id_sh": "A123456789",
+      "account_id_sz": "0123456789",
+      "is_logged_in": true,
+      "funds": [
+        {
+          "market": "SH",
+          "account_id": "A123456789",
+          "total_asset": 1000000.00,
+          "available_balance": 500000.00,
+          "frozen_balance": 50000.00,
+          "fetch_balance": 450000.00,
+          "market_value": 450000.00,
+          "total_profit": 50000.00,
+          "unrealized_profit": 20000.00,
+          "buying_power": 500000.00,
+          "withdraw_quota": 450000.00,
+          "commission": 100.50,
+          "stamp_tax": 50.25,
+          "transfer_fee": 10.00
+        },
+        {
+          "market": "SZ",
+          "account_id": "0123456789",
+          "total_asset": 800000.00,
+          "available_balance": 400000.00,
+          "frozen_balance": 40000.00,
+          "fetch_balance": 360000.00,
+          "market_value": 400000.00,
+          "total_profit": 40000.00,
+          "unrealized_profit": 15000.00,
+          "buying_power": 400000.00,
+          "withdraw_quota": 360000.00,
+          "commission": 80.50,
+          "stamp_tax": 40.25,
+          "transfer_fee": 8.00
+        }
+      ]
+    }
+  }
+}
+```

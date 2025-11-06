@@ -20,6 +20,12 @@ export const menuItems: { titleKey: string; href: string }[] = [
 // Just works with top-level folders and files. For files, don't add extension as it looks for the slug, and not the file name.
 export const sideNavMenuOrder: string[] = [
   "getting-started",
+  "apis",
+  "apis/calling-api.mdx",
+  "apis/system.mdx",
+  "apis/quote.mdx",
+  "apis/trade.mdx",
+  "apis/strategy.mdx",
 ];
 
 // Don't delete anything. You can use 'true' or 'false'.

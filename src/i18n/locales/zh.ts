@@ -14,6 +14,7 @@ const CNLocale: I18nStrings = {
   'on_this_page': '本页内容',
   'search': '搜索',
   docs: "文档",
+  "paths.apis": "APIs",
   "paths.getting-started": "开始使用",
   "a11y.languagePicker": "选择语言",
   "footer.builtBy": "构建者",
