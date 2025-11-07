@@ -1,0 +1,987 @@
+---
+title: Type Definitions
+hide_breadcrumbs: false
+---
+
+All data type definitions used in the Funiq Trading system. These types form the basis for the system APIs and data exchange.
+
+## Contents
+
+- [Base Types](#base-types)
+- [Quote Types](#quote-types)
+- [Trade Types](#trade-types)
+- [Strategy Types](#strategy-types)
+
+---
+
+## Base Types
+
+Base types define enums, structs and configurations commonly used across the quote, trade and strategy modules.
+
+### Market enum
+
+```cpp
+typedef enum {
+    MARKET_UNKNOWN = 0,   // Unknown market
+    MARKET_SSE = 1,       // Shanghai Stock Exchange
+    MARKET_SZSE = 2,      // Shenzhen Stock Exchange
+} MarketType;
+```
+
+Description: Identifies the market a security belongs to.
+
+---
+
+### Data type enum
+
+```cpp
+typedef enum {
+    // Quote data types (1-100)
+    DATA_TYPE_INDEX = 1,           // Index data
+    DATA_TYPE_DEPTH = 2,           // Market depth snapshot
+    DATA_TYPE_DEPTH_FIFTY = 3,     // Market depth queue (50 entries)
+    DATA_TYPE_ENTRUST = 4,         // Per-order (entrust) data
+    DATA_TYPE_TRADE = 5,           // Per-trade data
+    
+    // Trade data types (101-200)
+    DATA_TYPE_TRADE_ORDER_RTN = 101,      // Trade order return
+    DATA_TYPE_TRADE_ORDER_QUERY = 102,    // Trade order query
+    DATA_TYPE_TRADE_FILL = 103,           // Trade fill return
+    DATA_TYPE_TRADE_CANCEL = 104,         // Trade cancel
+    DATA_TYPE_TRADE_POSITION = 105,       // Position data
+    DATA_TYPE_TRADE_ACCOUNT = 106,        // Account data
+    DATA_TYPE_BANK_SECURITIES_TRANSFER = 107,  // Bank-securities transfer
+    DATA_TYPE_FUND_TRANSFER = 108,        // Fund transfer
+    
+    // Trade response types (111-120)
+    DATA_TYPE_ORDER_RSP = 111,            // Order response
+    DATA_TYPE_CANCEL_RSP = 112,           // Cancel response
+    DATA_TYPE_BANK_SECURITIES_TRANSFER_RSP = 113,  // Bank-securities transfer response
+    DATA_TYPE_FUND_TRANSFER_RSP = 114,    // Fund transfer response
+    
+    // System data types (201-300)
+    DATA_TYPE_SYSTEM_STATUS = 201,        // System status
+    DATA_TYPE_SYSTEM_LOG = 202,           // System log
+    DATA_TYPE_SYSTEM_CONFIG = 203,        // System config
+} FTDataType;
+```
+
+Description: Unified identifiers for different kinds of quote and trade data.
+
+---
+
+### Status enum
+
+```cpp
+typedef enum {
+    STATUS_OK = 0,                 // OK
+    STATUS_ERROR = -1,             // Error
+    STATUS_INITIALIZED = 1,        // Initialized
+    STATUS_CONNECTING = 2,         // Connecting
+    STATUS_CONNECTED = 3,          // Connected
+    STATUS_DISCONNECTED = 4,       // Disconnected
+    STATUS_LOGIN_SUCCESS = 5,      // Login succeeded
+    STATUS_LOGOUT_SUCCESS = 6,     // Logout succeeded
+    STATUS_LOGIN_FAILED = 7,       // Login failed
+} Status;
+```
+
+Description: Connection and runtime statuses used by the system.
+
+---
+
+### Security information
+
+```cpp
+typedef struct {
+    char code[32];              // Security code (e.g. "600000")
+    MarketType market;          // Market type
+    char name[64];              // Security name (optional)
+    char security_type[16];     // Security type (stock/fund/bond/option/etc.)
+} SecurityInfo;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `code` | char[32] | Security code, e.g. "600000" |
+| `market` | MarketType | Market (SSE/SZSE) |
+| `name` | char[64] | Security name (optional) |
+| `security_type` | char[16] | Security type identifier |
+
+---
+
+### Account information
+
+```cpp
+typedef struct {
+    char login_id[32];          // Login ID
+    char cust_id[32];           // Customer ID
+    char fund_account_id[32];   // Fund account ID
+    char account_id_sh[32];     // Shanghai securities account ID
+    char account_id_sz[32];     // Shenzhen securities account ID
+    char branch_id[32];         // Branch ID
+    char password[64];          // Password (optional, sensitive)
+} AccountInfo;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `login_id` | char[32] | Account used for login |
+| `cust_id` | char[32] | Broker customer number |
+| `fund_account_id` | char[32] | Fund account identifier |
+| `account_id_sh` | char[32] | Shanghai securities account |
+| `account_id_sz` | char[32] | Shenzhen securities account |
+| `branch_id` | char[32] | Branch identifier |
+| `password` | char[64] | Password (use only when necessary) |
+
+---
+
+### Subscription configuration
+
+```cpp
+typedef struct {
+    MarketType* markets;              // Subscribed market list (dynamically allocated)
+    int market_count;                 // Number of markets
+    
+    FTDataType* data_types;           // Subscribed data type list (dynamically allocated)
+    int data_type_count;              // Number of data types
+    
+    SecurityInfoInConfig* securities; // Subscribed securities list (dynamically allocated)
+    int security_count;               // Number of securities
+} SubscriptionConfig;
+```
+
+Description: Configures which markets, data types and securities to subscribe to. Uses dynamic allocation to support flexible counts.
+
+---
+
+### Data output configuration
+
+```cpp
+typedef enum {
+    DATA_OUTPUT_NONE = 0,           // No output
+    DATA_OUTPUT_SHARED_MEMORY = 1,  // Shared memory
+    DATA_OUTPUT_UDP_BROADCAST = 2,  // UDP broadcast
+    DATA_OUTPUT_FILE = 3,           // File output
+} DataOutputType;
+
+typedef struct {
+    DataOutputType output_type;     // Output type
+    char shm_name[128];             // Shared memory name
+    char file_path[256];            // File output path
+    char file_format[32];           // File format
+    int udp_port;                   // UDP port
+    char udp_multicast[64];         // UDP multicast address
+} DataConfig;
+```
+
+Description: Configures where to write data: shared memory, UDP broadcast, or files.
+
+---
+
+### Mock mode configuration
+
+```cpp
+typedef struct {
+    bool enabled;                   // Is Mock mode enabled
+    char mock_data_file[256];       // Path to mock data file
+    bool loop_replay;               // Loop replay
+    
+    // CSV mode fields
+    bool csv_mode;                  // Is CSV mode enabled
+    char csv_depth_file[256];       // CSV depth data file
+    char csv_index_file[256];       // CSV index data file
+    char csv_entrust_file[256];     // CSV entrust data file
+    char csv_trade_file[256];       // CSV trade data file
+    char csv_depth_fifty_file[256]; // CSV 50-depth data file
+} MockConfig;
+```
+
+Description: Mock mode is used for testing and replay. Supports traditional mock data files and CSV-based replay.
+
+---
+
+## Quote Types
+
+File location: `include/types/quote_types.h`
+
+Quote types define market-data related structs: index, snapshots (depth), per-order and per-trade records.
+
+### Trading phase enum
+
+```cpp
+typedef enum {
+    TRADING_PHASE_UNKNOWN = 0,        // Unknown
+    TRADING_PHASE_BEFORE_OPEN = 1,    // Before market open
+    TRADING_PHASE_OPEN_AUCTION = 2,   // Opening auction
+    TRADING_PHASE_CONTINUOUS = 3,     // Continuous trading
+    TRADING_PHASE_CLOSE_AUCTION = 4,  // Closing auction
+    TRADING_PHASE_AFTER_CLOSE = 5,    // After close
+    TRADING_PHASE_SUSPENDED = 6,      // Suspended
+} TradingPhase;
+```
+
+Description: Indicates the current trading phase of a security.
+
+---
+
+### Index data
+
+```cpp
+typedef struct {
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    uint32_t update_time;           // Update time (HHMMSSMMM format)
+    TradingPhase trading_phase;     // Trading phase
+    
+    double last_index;              // Latest index
+    double pre_close_index;         // Previous close index
+    double open_index;              // Open index
+    double high_index;              // High index
+    double low_index;               // Low index
+    double close_index;             // Close index
+    
+    uint64_t total_volume;          // Total volume
+    uint64_t total_value;           // Total turnover/value
+    uint64_t num_trades;            // Number of trades
+    
+    uint32_t sequence;              // Sequence number
+} IndexData;
+```
+
+Fields description:
+
+| Field | Type | Unit | Description |
+|------|------|------|------|
+| `timestamp` | uint64_t | microseconds | Data timestamp |
+| `update_time` | uint32_t | HHMMSSMMM | Update time (e.g. 093015123 means 09:30:15.123) |
+| `last_index` | double | points | Latest index value |
+| `total_volume` | uint64_t | shares | Cumulative volume |
+| `total_value` | uint64_t | currency (cents) | Cumulative turnover |
+
+---
+
+### Market depth snapshot (Depth)
+
+```cpp
+typedef struct {
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    uint32_t update_time;           // Update time (HHMMSSMMM format)
+    TradingPhase trading_phase;     // Trading phase
+    char instrument_status[16];     // Instrument status
+    
+    // Price info
+    double last_price;              // Last price
+    double pre_close_price;         // Previous close price
+    double open_price;              // Open price
+    double high_price;              // High price
+    double low_price;               // Low price
+    double close_price;             // Close price
+    double upper_limit_price;       // Upper limit (limit up)
+    double lower_limit_price;       // Lower limit (limit down)
+    double avg_price;               // Average price
+    
+    // Trade info
+    uint64_t total_volume;          // Total volume
+    uint64_t total_value;           // Total turnover/value
+    uint64_t num_trades;            // Number of trades
+    
+    // Order/booking info
+    uint64_t total_bid_qty;         // Total bid quantity
+    uint64_t total_ask_qty;         // Total ask quantity
+    double weighted_avg_bid_price;  // Weighted avg bid price
+    double weighted_avg_ask_price;  // Weighted avg ask price
+    uint32_t total_bid_number;      // Total number of bid orders
+    uint32_t total_ask_number;      // Total number of ask orders
+    
+    // Top-10 depth
+    double bid_price[10];           // Bid prices (1-10)
+    uint64_t bid_qty[10];           // Bid quantities (1-10)
+    double ask_price[10];           // Ask prices (1-10)
+    uint64_t ask_qty[10];           // Ask quantities (1-10)
+    
+    // Option-specific fields (0 when not option)
+    uint64_t total_position;        // Open interest
+    double reference_price;         // Reference price
+    
+    // Fund-specific fields (0 when not fund)
+    double iopv;                    // Real-time NAV
+    double pre_iopv;                // Previous NAV
+    
+    uint16_t channel_no;            // Channel number
+    uint32_t sequence;              // Sequence number
+} DepthData;
+```
+
+Core fields description:
+
+| Field | Type | Unit | Description |
+|------|------|------|------|
+| `last_price` | double | currency | Last traded price |
+| `bid_price[10]` | double[10] | currency | Bid prices from level 1 to 10 |
+| `bid_qty[10]` | uint64_t[10] | shares | Bid quantities from level 1 to 10 |
+| `ask_price[10]` | double[10] | currency | Ask prices from level 1 to 10 |
+| `ask_qty[10]` | uint64_t[10] | shares | Ask quantities from level 1 to 10 |
+| `iopv` | double | currency | Real-time NAV for ETFs |
+
+Notes:
+- For the top-10 depth arrays, `bid_price[0]` is the best bid (level 1), `ask_price[0]` is the best ask.
+- Option fields apply only to options.
+- Fund fields apply only to funds (ETF/LOF).
+
+---
+
+### Depth queue (50-order entrust)
+
+```cpp
+typedef struct {
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    uint32_t update_time;           // Update time (HHMMSSMMM format)
+    
+    // Best bid side
+    double bid_price;               // Best bid price
+    uint64_t bid_qty;               // Best bid quantity
+    uint32_t bid_num_orders;        // Number of orders at best bid
+    uint8_t bid_show_orders;        // Number of displayed orders at best bid
+    
+    // Best ask side
+    double ask_price;               // Best ask price
+    uint64_t ask_qty;               // Best ask quantity
+    uint32_t ask_num_orders;        // Number of orders at best ask
+    uint8_t ask_show_orders;        // Number of displayed orders at best ask
+    
+    // 50 entrust details (50 buy + 50 sell)
+    uint32_t orders[100];           // Entrust details
+    
+    uint16_t channel_no;            // Channel number
+    uint32_t sequence;              // Sequence number
+} DepthFiftyData;
+```
+
+Description: Provides the entrust queue for best bid and ask; the `orders` array contains the first 50 buy entries followed by 50 sell entries.
+
+---
+
+### Per-order (Entrust) data
+
+```cpp
+typedef struct {
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    uint64_t transact_time;         // Entrust time (microseconds)
+    
+    char order_type;                // Order type: 'A' = add, 'D' = delete, 'S' = status
+    char side;                      // Side: 'B' = buy, 'S' = sell, ' ' = status
+    char bs_flag;                   // Buy/sell flag (compatibility field)
+    
+    uint64_t order_no;              // Order number
+    uint32_t order_index;           // Order index
+    double price;                   // Order price
+    uint64_t qty;                   // Order quantity
+    uint64_t balance;               // Remaining quantity
+    
+    uint16_t channel_no;            // Channel number
+    uint64_t biz_index;             // Business sequence number
+    uint64_t appl_seq_num;          // Application sequence number
+    uint32_t sequence;              // Sequence number
+} EntrustData;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `order_type` | char | 'A' = new order, 'D' = delete order, 'S' = status update |
+| `side` | char | 'B' = buy, 'S' = sell, ' ' = no side |
+| `order_no` | uint64_t | Exchange order number |
+| `balance` | uint64_t | Remaining (unfilled) quantity |
+
+---
+
+### Per-trade data
+
+```cpp
+typedef struct {
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    uint64_t transact_time;         // Trade time (microseconds)
+    
+    uint64_t trade_id;              // Trade ID
+    uint32_t trade_index;           // Trade index
+    double price;                   // Trade price
+    uint64_t qty;                   // Trade quantity
+    uint64_t value;                 // Trade value
+    
+    uint64_t bid_order_no;          // Buyer order number
+    uint64_t ask_order_no;          // Seller order number
+    uint64_t bid_appl_seq_num;      // Buyer application sequence index
+    uint64_t ask_appl_seq_num;      // Seller application sequence index
+    
+    char exec_type;                 // Execution type: 'F' = trade, '4' = cancellation
+    char trade_flag;                // Trade flag (e.g. aggressor/passive, exchange-defined)
+    
+    uint16_t channel_no;            // Channel number
+    uint64_t biz_index;             // Business sequence number
+    uint64_t appl_seq_num;          // Application sequence number
+    uint32_t sequence;              // Sequence number
+} TradeData;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `exec_type` | char | 'F' = normal trade, '4' = cancelled trade |
+| `trade_flag` | char | Trade flag such as bid/ask or exchange-specific flags |
+| `bid_order_no` | uint64_t | Aggressor buyer order number |
+| `ask_order_no` | uint64_t | Aggressor seller order number |
+
+---
+
+## Trade Types
+
+Trade types define order placement, cancellation, queries, fund transfers and other trade-related structures.
+
+### Login mode enum
+
+```cpp
+typedef enum {
+    LOGIN_MODE_CUST_ID = 1,         // Login using customer ID
+    LOGIN_MODE_FUND_ACCOUNT_ID = 2, // Login using fund account ID
+} LoginMode;
+```
+
+---
+
+### Order side enum
+
+```cpp
+typedef enum {
+    SIDE_UNKNOWN = 0,
+    SIDE_BUY = 'B',                 // Buy
+    SIDE_SELL = 'S',                // Sell
+} OrderSide;
+```
+
+---
+
+### Order type enum
+
+```cpp
+typedef enum {
+    ORDER_TYPE_UNKNOWN = 0,
+    ORDER_TYPE_LIMIT = 1,           // Limit order
+    ORDER_TYPE_MARKET = 2,          // Market order
+    ORDER_TYPE_STOP = 3,            // Stop order
+    ORDER_TYPE_BEST_PRICE = 4,      // Best price order
+} OrderType;
+```
+
+---
+
+### Order status enum
+
+```cpp
+typedef enum {
+    ORDER_STATUS_UNKNOWN = 0,
+    ORDER_STATUS_NEW = 1,             // New order
+    ORDER_STATUS_PARTIAL_FILLED = 2,  // Partially filled
+    ORDER_STATUS_FILLED = 3,          // Fully filled
+    ORDER_STATUS_CANCELLED = 4,       // Cancelled
+    ORDER_STATUS_REJECTED = 5,        // Rejected
+    ORDER_STATUS_PENDING_CANCEL = 6,  // Pending cancel
+    ORDER_STATUS_PENDING_NEW = 7,     // Pending new/confirmation
+} OrderStatus;
+```
+
+---
+
+### Order sign enum
+
+```cpp
+typedef enum {
+    ORDER_SIGN_ORDER = 0,           // Normal order
+    ORDER_SIGN_CANCEL = 1,          // Cancel order
+    ORDER_SIGN_UNKNOWN = 2,         // Unknown
+} OrderSign;
+```
+
+---
+
+### Order query conditions
+
+```cpp
+typedef enum {
+    ORDER_QUERY_CONDITION_ALL = 0,                  // Query all (excluding cancel orders)
+    ORDER_QUERY_CONDITION_CANCEL_AVAILABLE = 1,     // Query cancelable orders
+    ORDER_QUERY_CONDITION_TRADE_EXEC_OR_CANCELLED = 2, // Orders with trades or cancelled
+    ORDER_QUERY_CONDITION_UNAVAILABLE_CANCEL = 3,   // Orders that cannot be canceled
+    ORDER_QUERY_CONDITION_ALL_WITH_CANCEL = 4,      // Query all orders (including cancel orders)
+    ORDER_QUERY_CONDITION_ALL_EXCEPT_INTERNAL_REJ = 5, // Query all except internal TE rejects
+} OrderQueryCondition;
+```
+
+---
+
+### Trade order request
+
+```cpp
+typedef struct {
+    AccountInfo account;            // Account info
+    char security_code[32];         // Security code
+    MarketType market;              // Market type
+    
+    OrderSide side;                 // Side
+    OrderType order_type;           // Order type
+    double price;                   // Order price (0 for market orders)
+    uint64_t qty;                   // Order quantity (shares)
+    uint64_t batch_id;              // Batch ID (optional)
+} TradeOrderRequest;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `price` | double | Order price; 0 for market orders |
+| `qty` | uint64_t | Order quantity in shares |
+| `batch_id` | uint64_t | Batch identifier for bulk orders |
+
+---
+
+### Trade order response
+
+```cpp
+typedef struct {
+    AccountInfo account;
+    SecurityInfo security_info;
+    uint64_t timestamp;             // Timestamp (microseconds)
+    char current_account_id[32];    // Current account ID
+    double price;                   // Order price
+    uint64_t qty;                   // Order quantity
+    int64_t request_id;             // Request ID
+    int64_t order_id;               // Order ID
+    uint64_t batch_id;              // Batch ID
+    OrderSide side;                 // Side
+    OrderType order_type;           // Order type
+    uint8_t business_type;          // Business type
+    int64_t response_time;          // Response time (microseconds)
+    
+    int32_t error_code;             // Error code (0 = success)
+    char error_msg[256];            // Error message
+} TradeOrderRspData;
+```
+
+Description: Immediate response to an order request; contains the order ID or an error.
+
+---
+
+### Trade order data
+
+```cpp
+typedef struct {
+    AccountInfo account;            // Account info
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    int64_t request_id;             // Request ID
+    char current_account_id[32];    // Current account ID
+    MarketType current_market;      // Current market
+    
+    int64_t order_id;               // Order ID
+    char exchange_order_id[32];     // Exchange order ID
+    uint64_t batch_id;              // Batch ID
+    
+    OrderSide side;                 // Side
+    OrderType order_type;           // Order type
+    OrderSign sign;                 // Order sign
+    OrderStatus status;             // Order status
+    char status_msg[128];           // Status message
+    
+    double price;                   // Order price
+    uint64_t qty;                   // Order quantity
+    uint64_t leaves_qty;            // Remaining quantity
+    uint64_t cum_qty;               // Cumulative filled quantity
+    double avg_price;               // Average filled price
+    double cum_amt;                 // Cumulative filled amount
+    
+    uint64_t order_time;            // Order time (microseconds)
+    uint64_t update_time;           // Update time (microseconds)
+    
+    int32_t error_code;             // Error code
+    char error_msg[256];            // Error message
+    
+    uint8_t business_type;          // Business type
+    uint16_t opu_id;                // Order routing channel ID
+    bool is_last;                   // Is last record (used for queries)
+} TradeOrderData;
+```
+
+Core fields description:
+
+| Field | Type | Unit | Description |
+|------|------|------|------|
+| `order_id` | int64_t | - | Internal system order ID |
+| `exchange_order_id` | char[32] | - | Exchange order ID |
+| `leaves_qty` | uint64_t | shares | Remaining quantity |
+| `cum_qty` | uint64_t | shares | Filled quantity |
+| `avg_price` | double | currency | Average execution price |
+| `is_last` | bool | - | Whether this is the last record in a query response |
+
+---
+
+### Trade fill (execution) data
+
+```cpp
+typedef struct {
+    AccountInfo account;            // Account info
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    int64_t request_id;             // Request ID
+    char current_account_id[32];    // Current account ID
+    MarketType current_market;      // Current market
+    
+    char trade_id[32];              // Trade ID
+    int64_t order_id;               // Order ID
+    char exchange_order_id[32];     // Exchange order ID
+    uint64_t batch_id;              // Batch ID
+    
+    OrderSide side;                 // Side
+    OrderType order_type;           // Order type
+    uint8_t business_type;          // Business type
+    
+    double price;                   // Trade price
+    uint64_t qty;                   // Trade quantity
+    double value;                   // Trade amount
+    double fee;                     // Fee
+    
+    uint64_t trade_time;            // Trade time (microseconds)
+    char currency[8];               // Currency (e.g. CNY)
+    
+    int32_t error_code;             // Error code
+    char error_msg[256];            // Error message
+    bool is_last;                   // Is last record
+} TradeFillData;
+```
+
+Description: Trade fill report — one order may produce multiple fills.
+
+---
+
+### Position data
+
+```cpp
+typedef struct {
+    AccountInfo account;            // Account info
+    SecurityInfo security_info;     // Security info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    int64_t request_id;             // Request ID
+    char current_account_id[32];    // Current account ID
+    MarketType current_market;      // Current market
+    
+    uint64_t total_qty;             // Total position (shares)
+    uint64_t available_qty;         // Available quantity (shares)
+    uint64_t frozen_qty;            // Frozen quantity (shares)
+    uint64_t today_buy_qty;         // Today's buy quantity (shares)
+    uint64_t today_sell_qty;        // Today's sell quantity (shares)
+    
+    double cost_price;              // Cost price
+    double market_price;            // Latest market price
+    double market_value;            // Market value
+    double profit_loss;             // Floating P/L
+    double profit_loss_ratio;       // P/L ratio (%)
+    
+    int32_t error_code;             // Error code
+    char error_msg[256];            // Error message
+    
+    uint64_t update_time;           // Update time (microseconds)
+    uint16_t security_type;         // Security type
+    bool is_last;                   // Is last record
+} PositionData;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `total_qty` | uint64_t | Total position = available + frozen |
+| `available_qty` | uint64_t | Quantity available for selling |
+| `frozen_qty` | uint64_t | Quantity frozen by open orders |
+| `profit_loss` | double | Floating profit/loss amount |
+| `profit_loss_ratio` | double | Profit/loss ratio (percentage) |
+
+---
+
+### Account (fund) data
+
+```cpp
+typedef struct {
+    AccountInfo account;            // Account info
+    uint64_t timestamp;             // Timestamp (microseconds)
+    int64_t request_id;             // Request ID
+    char currency[8];               // Currency (CNY)
+    char current_account_id[32];    // Current account ID
+    MarketType current_market;      // Current market
+    
+    double total_asset;             // Total asset
+    double cash_balance;            // Cash balance
+    double available_cash;          // Available cash
+    double frozen_cash;             // Frozen cash
+    double market_value;            // Securities market value
+    
+    double buying_power;            // Buying power
+    double withdrawal_cash;         // Withdrawable cash
+    double profit_loss;             // Today's P/L
+    double profit_loss_ratio;       // P/L ratio (%)
+    
+    int32_t error_code;             // Error code
+    char error_msg[256];            // Error message
+    
+    uint64_t update_time;           // Update time (microseconds)
+    bool is_last;                   // Is last record
+} AccountData;
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `total_asset` | double | Total assets = cash + market value |
+| `available_cash` | double | Cash available for buying |
+| `withdrawal_cash` | double | Cash available for withdrawal to bank |
+| `buying_power` | double | Current buying power (may include margin) |
+
+---
+
+### Bank-securities transfer data
+
+```cpp
+typedef enum {
+    BANK_SECURITIES_TRANSFER_IN = 1,   // Transfer in (bank -> securities)
+    BANK_SECURITIES_TRANSFER_OUT = 2,  // Transfer out (securities -> bank)
+} BankSecuritiesTransferDirection;
+
+typedef struct {
+    char login_id[32];               // Login ID
+    char cust_id[32];                // Customer ID
+    char fund_account_id[32];        // Fund account
+    char branch_id[32];              // Branch ID
+    char account_id[32];             // Account ID
+    uint64_t timestamp;              // Timestamp (microseconds)
+    int64_t request_id;              // Request ID
+    
+    BankSecuritiesTransferDirection direction;  // Transfer direction
+    
+    // Response info
+    int64_t serial_no;               // Serial number
+    int64_t transfer_serial_no;      // Transfer serial number
+    int64_t bank_transfer_serial_no; // Bank transfer serial number
+    uint8_t business_status;         // Business status
+    int64_t transact_time;           // Transaction time (microseconds)
+    
+    int32_t error_code;              // Error code
+    char error_msg[256];             // Error message
+} BankSecuritiesTransferData;
+```
+
+Description: Records for transfers between bank and securities accounts.
+
+---
+
+## Strategy Types
+
+Strategy types define strategy management, pending orders and strategy order records.
+
+### Strategy state enum
+
+```cpp
+enum class StrategyState {
+    UNDEFINED = 0,      // Undefined
+    UNINITIALIZED = 1,  // Uninitialized
+    INITIALIZED = 2,    // Initialized
+    STOPPED = 3,        // Stopped
+    RUNNING = 4,        // Running
+    ERROR = 5           // Error state
+};
+```
+
+---
+
+### Strategy configuration
+
+```cpp
+struct StrategyConfig {
+    std::string id;          // Strategy ID (unique)
+    std::string name;        // Strategy name
+    std::string description; // Strategy description
+    std::string module;      // Module name
+    std::string config;      // Default configuration as JSON string
+};
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `id` | string | Unique strategy identifier |
+| `name` | string | Display name |
+| `module` | string | Strategy module path |
+| `config` | string | Default config in JSON |
+
+---
+
+### Pending order status enum
+
+```cpp
+enum class PendingOrderStatus {
+    UNKNOWN = 0,     // Unknown
+    ACTIVE = 1,      // Active
+    EXECUTED = 2,    // Executed
+    CANCELLED = 3    // Cancelled
+};
+```
+
+---
+
+### Strategy pending order
+
+```cpp
+struct StrategyPendingOrder {
+    int64_t id = 0;                        // Primary key
+    std::string strategy_id;               // Strategy ID
+    std::string pending_order_info;        // Pending order info (JSON)
+                                           // Contains trigger conditions, sectors, security list, etc.
+    uint64_t create_time = 0;              // Creation time (microseconds)
+    uint64_t update_time = 0;              // Update time (microseconds)
+    PendingOrderStatus status = PendingOrderStatus::ACTIVE; // Pending order status
+};
+```
+
+Fields description:
+
+| Field | Type | Description |
+|------|------|------|
+| `id` | int64_t | DB primary key |
+| `strategy_id` | string | Associated strategy ID |
+| `pending_order_info` | string | JSON configuration for the pending order |
+| `status` | PendingOrderStatus | Current status (active/executed/cancelled) |
+
+Example `pending_order_info` JSON:
+
+```json
+{
+  "trigger_condition": "price > 10.0",
+  "sectors": ["Electronics", "Semiconductors"],
+  "securities": ["600000.SH", "000001.SZ"],
+  "order_params": {
+    "side": "buy",
+    "qty": 1000
+  }
+}
+```
+
+---
+
+### Strategy order
+
+```cpp
+struct StrategyOrder {
+    int64_t id = 0;                        // Primary key
+    int64_t pending_order_id = 0;          // Related pending order ID (foreign key)
+    std::string strategy_id;               // Strategy ID (redundant)
+    std::string pending_order_info;        // Pending order info (JSON, redundant)
+    uint64_t pending_submit_time = 0;      // Pending order submit time (microseconds)
+    
+    // Account info
+    std::string login_id;                  // Login ID
+    std::string cust_id;                   // Customer ID
+    std::string fund_account_id;           // Fund account ID
+    std::string account_id;                // Securities account ID
+    
+    // Order core info
+    std::string security_code;             // Security code
+    int64_t order_id = 0;                  // Order ID
+    std::string exchange_order_id;         // Exchange order ID
+    uint64_t batch_id = 0;                 // Batch ID
+    
+    OrderSide side = SIDE_UNKNOWN;         // Side
+    OrderSign sign = ORDER_SIGN_UNKNOWN;   // Order sign
+    OrderType order_type = ORDER_TYPE_UNKNOWN; // Order type
+    OrderStatus status = ORDER_STATUS_UNKNOWN; // Order status
+    std::string status_msg;                // Status message
+    
+    double price = 0.0;                    // Order price
+    uint64_t qty = 0;                      // Order quantity
+    uint64_t leaves_qty = 0;               // Remaining quantity
+    uint64_t cum_qty = 0;                  // Cumulative filled quantity
+    double avg_price = 0.0;                // Average execution price
+    double cum_amt = 0.0;                  // Cumulative filled amount
+    
+    uint64_t order_time = 0;               // Order time (microseconds)
+    uint64_t update_time = 0;              // Update time (microseconds)
+    uint64_t create_time = 0;              // Order creation time (microseconds)
+    
+    int32_t error_code = 0;                // Error code
+    std::string error_msg;                 // Error message
+};
+```
+
+Description: A strategy order is the actual order submitted after a pending strategy order is triggered.
+
+Key fields:
+
+| Field | Type | Description |
+|------|------|------|
+| `pending_order_id` | int64_t | Associated pending order ID (foreign key) |
+| `security_code` | string | Security code actually ordered |
+| `order_id` | int64_t | Order ID returned by trading system |
+| `status` | OrderStatus | Order status (aligned with trading order status) |
+
+---
+
+### Pending order query
+
+```cpp
+struct StrategyPendingOrderQuery {
+    std::string strategy_id;                   // Filter by strategy ID
+    PendingOrderStatus status = PendingOrderStatus::ACTIVE; // Status filter
+    bool filter_by_status = false;             // Whether to enable status filter
+    uint64_t start_time = 0;                   // Start time (microseconds)
+    uint64_t end_time = 0;                     // End time (microseconds)
+    int limit = 100;                           // Limit number of results
+    int offset = 0;                            // Offset (pagination)
+    std::string order_by = "create_time";      // Sort field
+    bool desc = true;                          // Descending order?
+};
+```
+
+Description: Query conditions for strategy pending orders.
+
+---
+
+### Strategy order query
+
+```cpp
+struct StrategyOrderQuery {
+    std::string strategy_id;                   // Filter by strategy ID
+    int64_t pending_order_id = 0;              // Filter by pending order ID
+    std::string security_code;                 // Filter by security code
+    int market = 0;                            // Market filter (0=all, 1=SSE, 2=SZSE)
+    OrderStatus status = ORDER_STATUS_UNKNOWN; // Status filter
+    uint64_t start_time = 0;                   // Start time (microseconds)
+    uint64_t end_time = 0;                     // End time (microseconds)
+    int limit = 100;                           // Limit number of results
+    int offset = 0;                            // Offset (pagination)
+    std::string order_by = "create_time";      // Sort field
+    bool desc = true;                          // Descending order?
+};
+```
+
+Description: Query conditions for strategy orders. Supports multiple filters and pagination.
+
+---

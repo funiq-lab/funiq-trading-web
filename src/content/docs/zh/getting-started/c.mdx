@@ -1,0 +1,3716 @@
+---
+title: C接口
+hide_breadcrumbs: false
+---
+
+C 接口 API 说明，包括行情接口、交易接口和策略接口。
+
+## 目录
+
+- [行情接口](#行情接口)
+- [交易接口](#交易接口)
+- [策略接口](#策略接口)
+
+---
+
+## 行情接口
+
+行情接口提供了完整的行情数据订阅、管理和查询功能。支持指数行情、深度行情、逐笔委托、逐笔成交等多种数据类型。
+
+#### 目录
+
+- [服务生命周期管理](#服务生命周期管理)
+- [状态查询接口](#状态查询接口)
+- [订阅管理接口](#订阅管理接口)
+- [订阅状态查询接口](#订阅状态查询接口)
+- [回调函数管理](#回调函数管理)
+- [数据获取接口](#数据获取接口)
+
+---
+
+### 服务生命周期管理
+
+#### quote_init
+
+初始化行情服务（使用默认配置文件）。
+
+**函数签名：**
+```c
+int quote_init(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+使用默认配置文件初始化行情服务。必须在使用其他接口前调用。
+
+---
+
+#### quote_start
+
+启动行情服务。
+
+**函数签名：**
+```c
+int quote_start(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+启动行情数据接收和处理服务。必须在初始化后调用。
+
+---
+
+#### quote_stop
+
+停止行情服务。
+
+**函数签名：**
+```c
+int quote_stop(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+停止行情数据接收和处理。停止后可以重新启动。
+
+---
+
+#### quote_release
+
+清理行情服务资源。
+
+**函数签名：**
+```c
+void quote_release(void);
+```
+
+**说明：**
+释放所有行情服务相关的资源。应在程序退出前调用。调用后需要重新初始化才能使用。
+
+---
+
+#### quote_get_parser
+
+获取行情服务处理器。
+
+**函数签名：**
+```c
+void* quote_get_parser(void);
+```
+
+**返回值：**
+- 行情解析器指针
+- `NULL`: 未初始化或失败
+
+**说明：**
+返回内部行情解析器的指针，用于高级操作。
+
+---
+
+### 状态查询接口
+
+#### quote_is_running
+
+检查行情服务是否正在运行。
+
+**函数签名：**
+```c
+int quote_is_running(void);
+```
+
+**返回值：**
+- `1`: 运行中
+- `0`: 已停止
+
+---
+
+#### quote_is_connected
+
+检查是否已连接到行情服务器。
+
+**函数签名：**
+```c
+int quote_is_connected(void);
+```
+
+**返回值：**
+- `1`: 已连接
+- `0`: 未连接
+
+---
+
+#### quote_get_status
+
+获取当前行情服务状态。
+
+**函数签名：**
+```c
+Status quote_get_status(void);
+```
+
+**返回值：**
+- `Status` 枚举值，表示当前状态
+
+---
+
+#### quote_get_last_error
+
+获取最后的错误信息。
+
+**函数签名：**
+```c
+const char* quote_get_last_error(void);
+```
+
+**返回值：**
+- 错误信息字符串
+- 空字符串: 无错误
+
+**说明：**
+返回最近一次操作的错误信息。字符串由内部管理，不需要释放。
+
+---
+
+#### quote_get_parser_id
+
+获取当前解析器ID。
+
+**函数签名：**
+```c
+const char* quote_get_parser_id(void);
+```
+
+**返回值：**
+- 解析器ID字符串
+- `NULL`: 未初始化
+
+**说明：**
+返回当前使用的行情解析器标识符。
+
+---
+
+### 订阅管理接口
+
+#### quote_subscribe
+
+设置订阅配置（完整替换当前订阅）。
+
+**函数签名：**
+```c
+int quote_subscribe(const SubscriptionConfig* config);
+```
+
+**参数：**
+- `config`: 订阅配置指针
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+使用新的订阅配置完全替换当前订阅设置。
+
+---
+
+#### quote_unsubscribe
+
+取消所有订阅。
+
+**函数签名：**
+```c
+int quote_unsubscribe(void);
+```
+
+---
+
+#### quote_add_markets
+
+添加订阅市场。
+
+**函数签名：**
+```c
+int quote_add_markets(MarketType* markets, int count);
+```
+
+**参数：**
+- `markets`: 市场类型数组
+- `count`: 市场数量
+
+**返回值：**
+- 正数: 实际添加的市场数量
+- 负数: 失败
+
+---
+
+#### quote_add_data_types
+
+添加订阅数据类型。
+
+**函数签名：**
+```c
+int quote_add_data_types(FTDataType* data_types, int count);
+```
+
+**参数：**
+- `data_types`: 数据类型数组
+- `count`: 数据类型数量
+
+**返回值：**
+- 正数: 实际添加的数据类型数量
+- 负数: 失败
+
+---
+
+#### quote_add_securities
+
+添加订阅证券。
+
+**函数签名：**
+```c
+int quote_add_securities(SecurityInfo* securities, int count);
+```
+
+**参数：**
+- `securities`: 证券信息数组
+- `count`: 证券数量
+
+**返回值：**
+- 正数: 实际添加的证券数量
+- 负数: 失败
+
+---
+
+#### quote_remove_markets
+
+移除订阅市场。
+
+**函数签名：**
+```c
+int quote_remove_markets(MarketType* markets, int count);
+```
+
+**参数：**
+- `markets`: 市场类型数组
+- `count`: 市场数量
+
+**返回值：**
+- 正数: 实际移除的市场数量
+- 负数: 失败
+
+---
+
+#### quote_remove_data_types
+
+移除订阅数据类型。
+
+**函数签名：**
+```c
+int quote_remove_data_types(FTDataType* data_types, int count);
+```
+
+**参数：**
+- `data_types`: 数据类型数组
+- `count`: 数据类型数量
+
+**返回值：**
+- 正数: 实际移除的数据类型数量
+- 负数: 失败
+
+---
+
+#### quote_remove_securities
+
+移除订阅证券。
+
+**函数签名：**
+```c
+int quote_remove_securities(SecurityInfo* securities, int count);
+```
+
+**参数：**
+- `securities`: 证券信息数组
+- `count`: 证券数量
+
+**返回值：**
+- 正数: 实际移除的证券数量
+- 负数: 失败
+
+---
+
+### 订阅状态查询接口
+
+#### quote_is_market_subscribed
+
+检查市场是否已订阅。
+
+**函数签名：**
+```c
+int quote_is_market_subscribed(MarketType market);
+```
+
+**参数：**
+- `market`: 市场类型
+
+**返回值：**
+- `1`: 已订阅
+- `0`: 未订阅
+
+---
+
+#### quote_is_data_type_subscribed
+
+检查数据类型是否已订阅。
+
+**函数签名：**
+```c
+int quote_is_data_type_subscribed(FTDataType data_type);
+```
+
+**参数：**
+- `data_type`: 数据类型
+
+**返回值：**
+- `1`: 已订阅
+- `0`: 未订阅
+
+---
+
+#### quote_is_code_subscribed
+
+检查证券代码是否已订阅。
+
+**函数签名：**
+```c
+int quote_is_code_subscribed(const char* code);
+```
+
+**参数：**
+- `code`: 证券代码
+
+**返回值：**
+- `1`: 已订阅
+- `0`: 未订阅
+
+---
+
+#### quote_should_process_data
+
+检查是否应该处理指定数据。
+
+**函数签名：**
+```c
+int quote_should_process_data(MarketType market, FTDataType data_type, const char* code);
+```
+
+**参数：**
+- `market`: 市场类型
+- `data_type`: 数据类型
+- `code`: 证券代码
+
+**返回值：**
+- `1`: 应该处理
+- `0`: 不应该处理
+
+**说明：**
+综合检查市场、数据类型和证券代码的订阅状态，判断是否应该处理该数据。
+
+---
+
+### 回调函数管理
+
+#### quote_set_index_data_callback
+
+设置指数数据回调函数。
+
+**函数签名：**
+```c
+IndexDataCallbackHandle quote_set_index_data_callback(IndexDataCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**回调函数类型：**
+```c
+typedef void (*IndexDataCallbackType)(const IndexData* data);
+```
+---
+
+#### quote_remove_index_data_callback
+
+移除指数数据回调函数。
+
+**函数签名：**
+```c
+int quote_remove_index_data_callback(IndexDataCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+---
+
+#### quote_set_depth_data_callback
+
+设置深度数据回调函数。
+
+**函数签名：**
+```c
+DepthDataCallbackHandle quote_set_depth_data_callback(DepthDataCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**回调函数类型：**
+```c
+typedef void (*DepthDataCallbackType)(const DepthData* data);
+```
+
+**返回值：**
+- 回调句柄
+
+---
+
+#### quote_remove_depth_data_callback
+
+移除深度数据回调函数。
+
+**函数签名：**
+```c
+int quote_remove_depth_data_callback(DepthDataCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+---
+
+#### quote_set_depth_fifty_data_callback
+
+设置深度50档数据回调函数。
+
+**函数签名：**
+```c
+DepthFiftyDataCallbackHandle quote_set_depth_fifty_data_callback(DepthFiftyDataCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**回调函数类型：**
+```c
+typedef void (*DepthFiftyDataCallbackType)(const DepthFiftyData* data);
+```
+
+**返回值：**
+- 回调句柄
+
+---
+
+#### quote_remove_depth_fifty_data_callback
+
+移除深度50档数据回调函数。
+
+**函数签名：**
+```c
+int quote_remove_depth_fifty_data_callback(DepthFiftyDataCallbackHandle handle);
+```
+
+---
+
+#### quote_set_entrust_data_callback
+
+设置委托数据回调函数。
+
+**函数签名：**
+```c
+EntrustDataCallbackHandle quote_set_entrust_data_callback(EntrustDataCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**回调函数类型：**
+```c
+typedef void (*EntrustDataCallbackType)(const EntrustData* data);
+```
+
+**返回值：**
+- 回调句柄
+
+---
+
+#### quote_remove_entrust_data_callback
+
+移除委托数据回调函数。
+
+**函数签名：**
+```c
+int quote_remove_entrust_data_callback(EntrustDataCallbackHandle handle);
+```
+
+---
+
+#### quote_set_trade_data_callback
+
+设置成交数据回调函数。
+
+**函数签名：**
+```c
+TradeDataCallbackHandle quote_set_trade_data_callback(TradeDataCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**回调函数类型：**
+```c
+typedef void (*TradeDataCallbackType)(const TradeData* data);
+```
+
+**返回值：**
+- 回调句柄
+
+---
+
+#### quote_remove_trade_data_callback
+
+移除成交数据回调函数。
+
+**函数签名：**
+```c
+int quote_remove_trade_data_callback(TradeDataCallbackHandle handle);
+```
+
+---
+
+#### quote_set_status_callback
+
+设置状态变化回调函数。
+
+**函数签名：**
+```c
+StatusCallbackHandle quote_set_status_callback(QuoteStatusCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**回调函数类型：**
+```c
+typedef void (*QuoteStatusCallbackType)(Status status, const char* message);
+```
+
+**返回值：**
+- 回调句柄
+
+---
+
+#### quote_remove_status_callback
+
+移除状态变化回调函数。
+
+**函数签名：**
+```c
+int quote_remove_status_callback(StatusCallbackHandle handle);
+```
+
+---
+
+### 数据获取接口
+
+
+该系列接口用于轮询
+
+#### quote_get_index_data
+
+获取最新指数行情数据。
+
+**函数签名：**
+```c
+int quote_get_index_data(IndexData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的指数行情数据。此方法不会阻塞。
+
+---
+
+#### quote_get_depth_data
+
+获取最新深度行情数据。
+
+**函数签名：**
+```c
+int quote_get_depth_data(DepthData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_depth_fifty_data
+
+获取最新深度50档行情数据。
+
+**函数签名：**
+```c
+int quote_get_depth_fifty_data(DepthFiftyData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_entrust_data
+
+获取最新委托数据。
+
+**函数签名：**
+```c
+int quote_get_entrust_data(EntrustData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_trade_data
+
+获取最新成交数据。
+
+**函数签名：**
+```c
+int quote_get_trade_data(TradeData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+## 按证券代码获取数据接口
+
+#### quote_get_index_data_by_code
+
+根据证券代码获取最新指数行情数据。
+
+**函数签名：**
+```c
+int quote_get_index_data_by_code(const char* code, IndexData* data);
+```
+
+**参数：**
+- `code`: 证券代码
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_depth_data_by_code
+
+根据证券代码获取最新深度行情数据。
+
+**函数签名：**
+```c
+int quote_get_depth_data_by_code(const char* code, DepthData* data);
+```
+
+**参数：**
+- `code`: 证券代码
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_depth_fifty_data_by_code
+
+根据证券代码获取最新深度50档行情数据。
+
+**函数签名：**
+```c
+int quote_get_depth_fifty_data_by_code(const char* code, DepthFiftyData* data);
+```
+
+**参数：**
+- `code`: 证券代码
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_entrust_data_by_code
+
+根据证券代码获取最新委托数据。
+
+**函数签名：**
+```c
+int quote_get_entrust_data_by_code(const char* code, EntrustData* data);
+```
+
+**参数：**
+- `code`: 证券代码
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+#### quote_get_trade_data_by_code
+
+根据证券代码获取最新成交数据。
+
+**函数签名：**
+```c
+int quote_get_trade_data_by_code(const char* code, TradeData* data);
+```
+
+**参数：**
+- `code`: 证券代码
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+---
+
+## 交易接口
+
+交易接口提供了完整的交易功能，包括委托下单、撤单、查询持仓、资金、订单、成交等操作，支持多账户管理、银证转账、资金划拨等功能。
+
+#### 目录
+
+- [服务生命周期管理](#服务生命周期管理-1)
+- [连接和登录管理](#连接和登录管理)
+- [状态查询接口](#状态查询接口-1)
+- [多账户管理接口](#多账户管理接口)
+- [交易操作接口](#交易操作接口)
+- [查询接口](#查询接口)
+- [回调函数管理](#回调函数管理-1)
+- [数据获取接口](#数据获取接口（轮询模式）-1)
+- [工具接口](#工具接口)
+
+---
+
+### 服务生命周期管理
+
+#### trade_init
+
+初始化交易服务（使用默认配置文件）。
+
+**函数签名：**
+```c
+int trade_init(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+使用默认配置文件初始化交易服务。必须在使用其他接口前调用。
+
+---
+
+#### trade_init_with_config
+
+使用指定配置文件初始化交易服务。
+
+**函数签名：**
+```c
+int trade_init_with_config(const char* config_file);
+```
+
+**参数：**
+- `config_file`: 配置文件路径
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+使用指定的配置文件初始化交易服务。配置文件中包含交易服务器地址、端口、账户信息等。
+
+---
+
+#### trade_start
+
+启动交易服务。
+
+**函数签名：**
+```c
+int trade_start(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+启动交易服务，开始接收和处理交易数据。必须在初始化后调用。
+
+---
+
+#### trade_stop
+
+停止交易服务。
+
+**函数签名：**
+```c
+int trade_stop(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+停止交易服务，停止接收和处理交易数据。停止后可以重新启动。
+
+---
+
+#### trade_release
+
+清理交易服务资源。
+
+**函数签名：**
+```c
+void trade_release(void);
+```
+
+**说明：**
+释放所有交易服务相关的资源。应在程序退出前调用。调用后需要重新初始化才能使用。
+
+---
+
+#### trade_get_handler
+
+获取交易服务处理器。
+
+**函数签名：**
+```c
+void* trade_get_handler(void);
+```
+
+**返回值：**
+- 交易服务处理器指针
+
+**说明：**
+获取内部交易服务处理器的指针，供高级用户使用。
+
+---
+
+### 连接和登录管理
+
+#### trade_connect
+
+连接交易系统。
+
+**函数签名：**
+```c
+int trade_connect(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+连接到交易服务器。必须在启动服务后调用。
+
+---
+
+#### trade_disconnect
+
+断开交易系统连接。
+
+**函数签名：**
+```c
+int trade_disconnect(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+断开与交易服务器的连接。
+
+---
+
+### 状态查询接口
+
+#### trade_is_running
+
+检查是否正在运行。
+
+**函数签名：**
+```c
+int trade_is_running(void);
+```
+
+**返回值：**
+- `1`: 运行中
+- `0`: 已停止
+
+**说明：**
+检查交易服务是否正在运行。
+
+---
+
+#### trade_is_connected
+
+检查是否已连接。
+
+**函数签名：**
+```c
+int trade_is_connected(void);
+```
+
+**返回值：**
+- `1`: 已连接
+- `0`: 未连接
+
+**说明：**
+检查是否已连接到交易服务器。
+
+---
+
+#### trade_is_account_login
+
+检查指定账户是否已登录交易系统。
+
+**函数签名：**
+```c
+int trade_is_account_login(const char* login_id);
+```
+
+**参数：**
+- `login_id`: 登陆账号
+
+**返回值：**
+- `1`: 已登录
+- `0`: 未登录
+
+**说明：**
+线程安全，查询指定账户的登录状态。
+
+---
+
+#### trade_get_logged_in_login_ids
+
+获取所有已登录账户的登陆账号列表。
+
+**函数签名：**
+```c
+int trade_get_logged_in_login_ids(char*** account_ids, int* count);
+```
+
+**参数：**
+- `account_ids`: 输出登陆账号数组（调用者负责释放内存）
+- `count`: 输出账户数量
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+线程安全。获取所有已登录账户的登陆账号列表，调用者需要使用 `trade_free_account_ids` 释放内存。
+
+---
+
+#### trade_get_logged_in_account_count
+
+获取已登录账户总数。
+
+**函数签名：**
+```c
+int trade_get_logged_in_account_count(void);
+```
+
+**返回值：**
+- 已登录账户数量
+- 负数: 错误
+
+**说明：**
+线程安全。返回当前已登录的账户总数。
+
+---
+
+#### trade_get_status
+
+获取当前状态。
+
+**函数签名：**
+```c
+Status trade_get_status(void);
+```
+
+**返回值：**
+- 状态值（Status 枚举类型）
+
+**说明：**
+获取交易服务的当前状态。
+
+---
+
+#### trade_get_last_error
+
+获取最后的错误信息。
+
+**函数签名：**
+```c
+const char* trade_get_last_error(void);
+```
+
+**返回值：**
+- 错误信息字符串
+
+**说明：**
+获取最近一次操作的错误信息。
+
+---
+
+#### trade_get_interface_id
+
+获取当前交易接口ID。
+
+**函数签名：**
+```c
+const char* trade_get_interface_id(void);
+```
+
+**返回值：**
+- 接口ID字符串
+- `NULL`: 未初始化
+
+**说明：**
+获取交易系统接口的唯一标识。
+
+---
+
+### 多账户管理接口
+
+#### trade_get_account_info_by_id
+
+根据登陆账号获取账户信息。
+
+**函数签名：**
+```c
+int trade_get_account_info_by_id(const char* login_id, AccountInfo* account);
+```
+
+**参数：**
+- `login_id`: 登陆账号
+- `account`: 输出账户信息
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+根据登陆账号查询账户的详细信息。
+
+---
+
+#### trade_get_all_login_ids
+
+获取所有账户的登陆账号列表。
+
+**函数签名：**
+```c
+int trade_get_all_login_ids(char*** account_ids, int* count);
+```
+
+**参数：**
+- `account_ids`: 输出登陆账号数组（调用者负责释放内存）
+- `count`: 输出账户数量
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+获取所有配置的账户的登陆账号列表（包括未登录的账户）。调用者需要使用 `trade_free_account_ids` 释放内存。
+
+---
+
+#### trade_free_account_ids
+
+释放账户ID列表内存。
+
+**函数签名：**
+```c
+void trade_free_account_ids(char** account_ids, int count);
+```
+
+**参数：**
+- `account_ids`: 账户ID数组
+- `count`: 数组大小
+
+**说明：**
+释放由 `trade_get_all_login_ids` 或 `trade_get_logged_in_login_ids` 分配的内存。
+
+---
+
+#### trade_get_account_count
+
+获取账户数量。
+
+**函数签名：**
+```c
+int trade_get_account_count(void);
+```
+
+**返回值：**
+- 账户数量
+- 负数: 错误
+
+**说明：**
+返回配置的账户总数（包括未登录的账户）。
+
+---
+
+#### trade_has_account
+
+检查是否存在指定账户。
+
+**函数签名：**
+```c
+int trade_has_account(const char* login_id);
+```
+
+**参数：**
+- `login_id`: 登陆账号
+
+**返回值：**
+- `1`: 存在
+- `0`: 不存在
+
+**说明：**
+检查指定登陆账号的账户是否已配置。
+
+---
+
+#### trade_get_account_data_by_id
+
+根据完整账户标识获取最新资金数据。
+
+**函数签名：**
+```c
+int trade_get_account_data_by_id(const char* login_id, const char* fund_account_id, 
+                                  const char* account_id, AccountData* data);
+```
+
+**参数：**
+- `login_id`: 登陆账号
+- `fund_account_id`: 资金账户ID
+- `account_id`: 证券账户ID（用于区分沪深两市）
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+根据完整的账户标识（登陆账号+资金账户+证券账户）获取最新的资金数据。
+
+---
+
+#### trade_get_all_account_data_by_fund_id
+
+根据登陆账号和资金账户获取所有市场的资金数据。
+
+**函数签名：**
+```c
+int trade_get_all_account_data_by_fund_id(const char* login_id, const char* fund_account_id,
+                                           AccountData* sh_data, AccountData* sz_data);
+```
+
+**参数：**
+- `login_id`: 登陆账号
+- `fund_account_id`: 资金账户ID
+- `sh_data`: 上海市场资金数据（可为NULL）
+- `sz_data`: 深圳市场资金数据（可为NULL）
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+根据登陆账号和资金账户ID获取上海和深圳两个市场的资金数据。可以选择性地只获取某一个市场的数据。
+
+---
+
+#### trade_get_all_account_data_by_login_id
+
+根据登陆账号获取所有资金账户的所有市场数据。
+
+**函数签名：**
+```c
+int trade_get_all_account_data_by_login_id(const char* login_id, 
+                                            AccountData** account_data_array, int* count);
+```
+
+**参数：**
+- `login_id`: 登陆账号
+- `account_data_array`: 输出账户数据数组（调用者负责释放内存）
+- `count`: 输出数据数量
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+根据登陆账号获取该账户下所有资金账户的所有市场的资金数据。调用者需要使用 `trade_free_query_results` 释放内存。
+
+---
+
+### 交易操作接口
+
+#### trade_send_order
+
+委托下单。
+
+**函数签名：**
+```c
+int64_t trade_send_order(const TradeOrderRequest* order);
+```
+
+**参数：**
+- `order`: 下单请求
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+提交委托下单请求。返回的request_id可以用于在回调函数中匹配响应。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_send_order_sync
+
+同步委托下单。
+
+**函数签名：**
+```c
+int32_t trade_send_order_sync(const TradeOrderRequest* order, TradeOrderRspData* result, 
+                               int timeout_ms);
+```
+
+**参数：**
+- `order`: 下单请求
+- `result`: 输出结果数据
+- `timeout_ms`: 超时时间（毫秒）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步提交委托下单请求，会阻塞等待结果返回或超时。
+
+---
+
+#### trade_cancel_order
+
+撤单。
+
+**函数签名：**
+```c
+int64_t trade_cancel_order(const AccountInfo* account, const int64_t orig_order_id,
+                            uint64_t orig_batch_id, MarketType market);
+```
+
+**参数：**
+- `account`: 账户信息
+- `orig_order_id`: 原订单编号
+- `orig_batch_id`: 原批次编号
+- `market`: 市场代码
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+提交撤单请求。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_cancel_order_sync
+
+同步撤单。
+
+**函数签名：**
+```c
+int32_t trade_cancel_order_sync(const AccountInfo* account, const int64_t orig_order_id,
+                                 uint64_t orig_batch_id, MarketType market,
+                                 TradeOrderCancelRsqData* result, int timeout_ms);
+```
+
+**参数：**
+- `account`: 账户信息
+- `orig_order_id`: 原订单编号
+- `orig_batch_id`: 原批次编号
+- `market`: 市场代码
+- `result`: 输出结果数据
+- `timeout_ms`: 超时时间（毫秒）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步提交撤单请求，会阻塞等待结果返回或超时。
+
+---
+
+### 查询接口
+
+#### trade_query_orders
+
+查询订单。
+
+**函数签名：**
+```c
+int64_t trade_query_orders(const AccountInfo* account, MarketType market, 
+                            const char* security_code, const int64_t order_id,
+                            const QueryRequestParams* params);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码（必填，用于指定查询哪个市场）
+- `security_code`: 证券代码（可选，NULL表示查所有）
+- `order_id`: 订单编号（可选，0表示查所有）
+- `params`: 查询参数
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+查询订单信息。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_query_orders_sync
+
+同步查询订单。
+
+**函数签名：**
+```c
+int32_t trade_query_orders_sync(const AccountInfo* account, MarketType market,
+                                 const char* security_code, const int64_t order_id,
+                                 const QueryRequestParams* params,
+                                 TradeOrderData** results, int* count, int timeout_ms,
+                                 char* error_msg);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码
+- `security_code`: 证券代码（可选）
+- `order_id`: 订单编号（可选）
+- `params`: 查询参数
+- `results`: 输出结果数组（调用者负责释放内存）
+- `count`: 输出结果数量
+- `timeout_ms`: 超时时间（毫秒）
+- `error_msg`: 错误信息输出缓冲区（可选，NULL表示不需要，建议大小为TRADE_ERROR_MSG_SIZE）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步查询订单信息，会阻塞等待结果返回或超时。调用者需要使用 `trade_free_query_results` 释放内存。
+
+---
+
+#### trade_query_positions
+
+查询持仓。
+
+**函数签名：**
+```c
+int64_t trade_query_positions(const AccountInfo* account, MarketType market,
+                               const char* security_code, const QueryRequestParams* params);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码（必填，用于指定查询哪个市场）
+- `security_code`: 证券代码（可选，NULL表示查所有）
+- `params`: 查询参数
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+查询持仓信息。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_query_positions_sync
+
+同步查询持仓。
+
+**函数签名：**
+```c
+int32_t trade_query_positions_sync(const AccountInfo* account, MarketType market,
+                                    const char* security_code,
+                                    const QueryRequestParams* params,
+                                    PositionData** results, int* count, int timeout_ms,
+                                    char* error_msg);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码
+- `security_code`: 证券代码（可选）
+- `params`: 查询参数
+- `results`: 输出结果数组（调用者负责释放内存）
+- `count`: 输出结果数量
+- `timeout_ms`: 超时时间（毫秒）
+- `error_msg`: 错误信息输出缓冲区（可选，NULL表示不需要，建议大小为TRADE_ERROR_MSG_SIZE）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步查询持仓信息，会阻塞等待结果返回或超时。调用者需要使用 `trade_free_query_results` 释放内存。
+
+---
+
+#### trade_query_funds
+
+查询资金。
+
+**函数签名：**
+```c
+int64_t trade_query_funds(const AccountInfo* account, MarketType market,
+                           const char* currency, const QueryRequestParams* params);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码（必填，用于指定查询哪个市场的资金）
+- `currency`: 货币种类（可选，NULL表示默认）
+- `params`: 查询参数
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+查询资金信息。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_query_funds_sync
+
+同步查询资金。
+
+**函数签名：**
+```c
+int32_t trade_query_funds_sync(const AccountInfo* account, MarketType market,
+                                const char* currency,
+                                const QueryRequestParams* params,
+                                AccountData** results, int* count, int timeout_ms,
+                                char* error_msg);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码
+- `currency`: 货币种类（可选）
+- `params`: 查询参数
+- `results`: 输出结果数组（调用者负责释放内存）
+- `count`: 输出结果数量
+- `timeout_ms`: 超时时间（毫秒）
+- `error_msg`: 错误信息输出缓冲区（可选，NULL表示不需要，建议大小为TRADE_ERROR_MSG_SIZE）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步查询资金信息，会阻塞等待结果返回或超时。调用者需要使用 `trade_free_query_results` 释放内存。
+
+---
+
+#### trade_query_trades
+
+查询成交。
+
+**函数签名：**
+```c
+int64_t trade_query_trades(const AccountInfo* account, MarketType market,
+                            const char* security_code, const int64_t order_id,
+                            const QueryRequestParams* params);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码（必填，用于指定查询哪个市场）
+- `security_code`: 证券代码（可选，NULL表示查所有）
+- `order_id`: 订单编号（可选，0表示查所有）
+- `params`: 查询参数
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+查询成交记录。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_query_trades_sync
+
+同步查询成交。
+
+**函数签名：**
+```c
+int32_t trade_query_trades_sync(const AccountInfo* account, MarketType market,
+                                 const char* security_code, const int64_t order_id,
+                                 const QueryRequestParams* params,
+                                 TradeFillData** results, int* count, int timeout_ms,
+                                 char* error_msg);
+```
+
+**参数：**
+- `account`: 账户信息
+- `market`: 市场代码
+- `security_code`: 证券代码（可选）
+- `order_id`: 订单编号（可选）
+- `params`: 查询参数
+- `results`: 输出结果数组（调用者负责释放内存）
+- `count`: 输出结果数量
+- `timeout_ms`: 超时时间（毫秒）
+- `error_msg`: 错误信息输出缓冲区（可选，NULL表示不需要，建议大小为TRADE_ERROR_MSG_SIZE）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步查询成交记录，会阻塞等待结果返回或超时。调用者需要使用 `trade_free_query_results` 释放内存。
+
+---
+
+#### trade_bank_securities_transfer
+
+银证转账。
+
+**函数签名：**
+```c
+int64_t trade_bank_securities_transfer(const AccountInfo* account,
+                                        BankSecuritiesTransferDirection direction,
+                                        MarketType market,
+                                        double transfer_amount,
+                                        const char* currency,
+                                        const char* bank_password,
+                                        const char* fund_password,
+                                        const char* remark);
+```
+
+**参数：**
+- `account`: 账户信息
+- `direction`: 转账方向（1-银证转入，2-银证转出）
+- `market`: 市场代码
+- `transfer_amount`: 转账金额
+- `currency`: 货币种类（可选，默认CNY）
+- `bank_password`: 银行密码（可选）
+- `fund_password`: 资金密码（可选）
+- `remark`: 备注（可选）
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+进行银证转账操作。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_bank_securities_transfer_sync
+
+同步银证转账。
+
+**函数签名：**
+```c
+int32_t trade_bank_securities_transfer_sync(const AccountInfo* account,
+                                             BankSecuritiesTransferDirection direction,
+                                             MarketType market,
+                                             double transfer_amount,
+                                             const char* currency,
+                                             const char* bank_password,
+                                             const char* fund_password,
+                                             const char* remark,
+                                             BankSecuritiesTransferData* result,
+                                             int timeout_ms);
+```
+
+**参数：**
+- `account`: 账户信息
+- `direction`: 转账方向
+- `market`: 市场代码
+- `transfer_amount`: 转账金额
+- `currency`: 货币种类（可选）
+- `bank_password`: 银行密码（可选）
+- `fund_password`: 资金密码（可选）
+- `remark`: 备注（可选）
+- `result`: 输出结果数据
+- `timeout_ms`: 超时时间（毫秒）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步进行银证转账操作，会阻塞等待结果返回或超时。
+
+---
+
+#### trade_fund_transfer
+
+沪深资金划拨。
+
+**函数签名：**
+```c
+int64_t trade_fund_transfer(const AccountInfo* account,
+                             const char* fund_out_account_id,
+                             MarketType fund_out_market,
+                             const char* fund_in_account_id,
+                             MarketType fund_in_market,
+                             double transfer_amount);
+```
+
+**参数：**
+- `account`: 账户信息
+- `fund_out_account_id`: 资金转出账户ID
+- `fund_out_market`: 资金转出市场
+- `fund_in_account_id`: 资金转入账户ID
+- `fund_in_market`: 资金转入市场
+- `transfer_amount`: 划拨金额
+
+**返回值：**
+- 正数: 生成的request_id（用于跟踪响应）
+- `0`或负数: 失败
+
+**说明：**
+进行沪深两市之间的资金划拨。这是异步操作，结果通过回调函数返回。
+
+---
+
+#### trade_fund_transfer_sync
+
+同步资金划拨。
+
+**函数签名：**
+```c
+int32_t trade_fund_transfer_sync(const AccountInfo* account,
+                                  const char* fund_out_account_id,
+                                  MarketType fund_out_market,
+                                  const char* fund_in_account_id,
+                                  MarketType fund_in_market,
+                                  double transfer_amount,
+                                  FundTransferData* result,
+                                  int timeout_ms);
+```
+
+**参数：**
+- `account`: 账户信息
+- `fund_out_account_id`: 资金转出账户ID
+- `fund_out_market`: 资金转出市场
+- `fund_in_account_id`: 资金转入账户ID
+- `fund_in_market`: 资金转入市场
+- `transfer_amount`: 划拨金额
+- `result`: 输出结果数据
+- `timeout_ms`: 超时时间（毫秒）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+同步进行资金划拨操作，会阻塞等待结果返回或超时。
+
+---
+
+### 回调函数管理
+
+#### trade_set_order_query_callback
+
+设置订单查询回调函数。
+
+**函数签名：**
+```c
+TradeOrderQueryCallbackHandle trade_set_order_query_callback(TradeOrderQueryCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置订单查询结果的回调函数。当订单查询完成时会调用此函数。
+
+---
+
+#### trade_remove_order_query_callback
+
+移除订单查询回调函数。
+
+**函数签名：**
+```c
+int trade_remove_order_query_callback(TradeOrderQueryCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的订单查询回调函数。
+
+---
+
+#### trade_set_fill_callback
+
+设置成交回调函数。
+
+**函数签名：**
+```c
+TradeFillCallbackHandle trade_set_fill_callback(TradeFillCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置成交数据的回调函数。当有成交发生时会调用此函数。
+
+---
+
+#### trade_remove_fill_callback
+
+移除成交回调函数。
+
+**函数签名：**
+```c
+int trade_remove_fill_callback(TradeFillCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的成交回调函数。
+
+---
+
+#### trade_set_position_callback
+
+设置持仓回调函数。
+
+**函数签名：**
+```c
+PositionCallbackHandle trade_set_position_callback(PositionCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置持仓数据的回调函数。当持仓发生变化时会调用此函数。
+
+---
+
+#### trade_remove_position_callback
+
+移除持仓回调函数。
+
+**函数签名：**
+```c
+int trade_remove_position_callback(PositionCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的持仓回调函数。
+
+---
+
+#### trade_set_account_callback
+
+设置资金回调函数。
+
+**函数签名：**
+```c
+AccountCallbackHandle trade_set_account_callback(AccountCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置资金数据的回调函数。当资金发生变化时会调用此函数。
+
+---
+
+#### trade_remove_account_callback
+
+移除资金回调函数。
+
+**函数签名：**
+```c
+int trade_remove_account_callback(AccountCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的资金回调函数。
+
+---
+
+#### trade_set_error_callback
+
+设置错误回调函数。
+
+**函数签名：**
+```c
+TradeErrorCallbackHandle trade_set_error_callback(TradeErrorCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置错误事件的回调函数。当发生错误时会调用此函数。
+
+---
+
+#### trade_remove_error_callback
+
+移除错误回调函数。
+
+**函数签名：**
+```c
+int trade_remove_error_callback(TradeErrorCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的错误回调函数。
+
+---
+
+#### trade_set_bank_securities_transfer_callback
+
+设置银证转账回调函数。
+
+**函数签名：**
+```c
+BankSecuritiesTransferCallbackHandle trade_set_bank_securities_transfer_callback(BankSecuritiesTransferCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置银证转账结果的回调函数。当银证转账完成时会调用此函数。
+
+---
+
+#### trade_remove_bank_securities_transfer_callback
+
+移除银证转账回调函数。
+
+**函数签名：**
+```c
+int trade_remove_bank_securities_transfer_callback(BankSecuritiesTransferCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的银证转账回调函数。
+
+---
+
+#### trade_set_fund_transfer_callback
+
+设置资金划拨回调函数。
+
+**函数签名：**
+```c
+FundTransferCallbackHandle trade_set_fund_transfer_callback(FundTransferCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置资金划拨结果的回调函数。当资金划拨完成时会调用此函数。
+
+---
+
+#### trade_remove_fund_transfer_callback
+
+移除资金划拨回调函数。
+
+**函数签名：**
+```c
+int trade_remove_fund_transfer_callback(FundTransferCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的资金划拨回调函数。
+
+---
+
+#### trade_set_order_rsp_callback
+
+设置委托响应回调函数。
+
+**函数签名：**
+```c
+TradeOrderRspCallbackHandle trade_set_order_rsp_callback(TradeOrderRspCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置委托响应的回调函数。当下单请求得到响应时会调用此函数。
+
+---
+
+#### trade_remove_order_rsp_callback
+
+移除委托响应回调函数。
+
+**函数签名：**
+```c
+int trade_remove_order_rsp_callback(TradeOrderRspCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的委托响应回调函数。
+
+---
+
+#### trade_set_order_rtn_callback
+
+设置委托主推回调函数。
+
+**函数签名：**
+```c
+TradeOrderCallbackHandle trade_set_order_rtn_callback(TradeOrderCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置委托主推的回调函数。当订单状态发生变化时，交易系统会主动推送订单数据，此时会调用此函数。
+
+---
+
+#### trade_remove_order_rtn_callback
+
+移除委托主推回调函数。
+
+**函数签名：**
+```c
+int trade_remove_order_rtn_callback(TradeOrderCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的委托主推回调函数。
+
+---
+
+#### trade_set_cancel_rsp_callback
+
+设置撤单响应回调函数。
+
+**函数签名：**
+```c
+TradeOrderCancelRspCallbackHandle trade_set_cancel_rsp_callback(TradeOrderCancelRspCallbackType callback);
+```
+
+**参数：**
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄（可用if(handle)检查是否设置成功）
+
+**说明：**
+设置撤单响应的回调函数。当撤单请求得到响应时会调用此函数。
+
+---
+
+#### trade_remove_cancel_rsp_callback
+
+移除撤单响应回调函数。
+
+**函数签名：**
+```c
+int trade_remove_cancel_rsp_callback(TradeOrderCancelRspCallbackHandle handle);
+```
+
+**参数：**
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的撤单响应回调函数。
+
+---
+
+### 数据获取接口（轮询模式）
+
+#### trade_get_bank_securities_transfer_data
+
+获取最新银证转账数据。
+
+**函数签名：**
+```c
+int trade_get_bank_securities_transfer_data(BankSecuritiesTransferData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的银证转账数据。此方法不会阻塞。
+
+---
+
+#### trade_get_fund_transfer_data
+
+获取最新资金划拨数据。
+
+**函数签名：**
+```c
+int trade_get_fund_transfer_data(FundTransferData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的资金划拨数据。此方法不会阻塞。
+
+---
+
+#### trade_get_order_rsp_data
+
+获取最新委托响应数据。
+
+**函数签名：**
+```c
+int trade_get_order_rsp_data(TradeOrderRspData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的委托响应数据。此方法不会阻塞。
+
+---
+
+#### trade_get_cancel_rsp_data
+
+获取最新撤单响应数据。
+
+**函数签名：**
+```c
+int trade_get_cancel_rsp_data(TradeOrderCancelRsqData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的撤单响应数据。此方法不会阻塞。
+
+---
+
+#### trade_get_order_data
+
+获取最新订单数据。
+
+**函数签名：**
+```c
+int trade_get_order_data(TradeOrderData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的订单数据（包括订单查询结果和主推订单）。此方法不会阻塞。
+
+---
+
+#### trade_get_fill_data
+
+获取最新成交数据。
+
+**函数签名：**
+```c
+int trade_get_fill_data(TradeFillData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的成交数据。此方法不会阻塞。
+
+---
+
+#### trade_get_position_data
+
+获取最新持仓数据。
+
+**函数签名：**
+```c
+int trade_get_position_data(PositionData* data);
+```
+
+**参数：**
+- `data`: 输出数据指针
+
+**返回值：**
+- `1`: 成功获取
+- `0`: 无数据
+- `-1`: 失败
+
+**说明：**
+从队列中获取最新的持仓数据。此方法不会阻塞。
+
+---
+
+### 工具接口
+
+#### trade_free_query_results
+
+释放查询结果数组内存。
+
+**函数签名：**
+```c
+void trade_free_query_results(void* results, int count);
+```
+
+**参数：**
+- `results`: 结果数组
+- `count`: 数组大小
+
+**说明：**
+释放由同步查询函数（如 `trade_query_orders_sync`、`trade_query_positions_sync` 等）分配的内存。
+
+---
+
+#### trade_set_db_manager
+
+设置数据库管理器。
+
+**函数签名：**
+```c
+int trade_set_db_manager(void* db_manager);
+```
+
+**参数：**
+- `db_manager`: 数据库管理器指针
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+设置交易服务使用的数据库管理器，用于持久化交易数据。
+
+---
+
+#### trade_get_db_manager
+
+获取数据库管理器。
+
+**函数签名：**
+```c
+void* trade_get_db_manager(void);
+```
+
+**返回值：**
+- 数据库管理器指针
+
+**说明：**
+获取当前交易服务使用的数据库管理器。
+
+---
+
+#### trade_set_quote_parser
+
+设置行情解析器。
+
+**函数签名：**
+```c
+int trade_set_quote_parser(void* quote_parser);
+```
+
+**参数：**
+- `quote_parser`: 行情解析器指针
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+设置交易服务使用的行情解析器，用于获取实时行情数据。
+
+---
+
+#### trade_get_quote_parser
+
+获取行情解析器。
+
+**函数签名：**
+```c
+void* trade_get_quote_parser(void);
+```
+
+**返回值：**
+- 行情解析器指针
+
+**说明：**
+获取当前交易服务使用的行情解析器。
+
+---
+
+## 策略接口
+
+策略接口提供了完整的策略服务管理、策略实例管理、挂单队列管理和数据分发功能。支持多策略并发运行、动态配置更新、实时数据获取等功能。
+
+#### 目录
+
+- [服务生命周期管理接口](#服务生命周期管理接口)
+- [策略实例管理接口](#策略实例管理接口)
+- [批量策略操作接口](#批量策略操作接口)
+- [状态查询接口](#状态查询接口-1)
+- [策略配置管理接口](#策略配置管理接口)
+- [挂单队列管理接口](#挂单队列管理接口)
+- [策略数据获取接口](#策略数据获取接口)
+- [策略元信息查询接口](#策略元信息查询接口)
+- [依赖服务管理接口](#依赖服务管理接口)
+- [数据分发接口](#数据分发接口)
+- [全局策略模块管理接口](#全局策略模块管理接口)
+
+---
+
+### 服务生命周期管理接口
+
+#### strategy_init
+
+初始化策略服务（使用默认配置文件）。
+
+**函数签名：**
+```c
+int strategy_init(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+使用默认配置文件初始化策略服务。必须在使用其他接口前调用。
+
+---
+
+#### strategy_init_with_config
+
+使用指定配置文件初始化策略服务。
+
+**函数签名：**
+```c
+int strategy_init_with_config(const char* config_file);
+```
+
+**参数：**
+- `config_file`: 配置文件路径
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+使用指定的配置文件初始化策略服务。允许自定义配置路径。
+
+---
+
+#### strategy_start_service
+
+启动策略服务。
+
+**函数签名：**
+```c
+int strategy_start_service(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+启动策略服务，开始接收和处理数据。必须在初始化后调用。
+
+---
+
+#### strategy_stop_service
+
+停止策略服务。
+
+**函数签名：**
+```c
+int strategy_stop_service(void);
+```
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+停止策略服务。停止后可以重新启动。
+
+---
+
+#### strategy_release
+
+清理策略服务资源。
+
+**函数签名：**
+```c
+void strategy_release(void);
+```
+
+**说明：**
+释放所有策略服务相关的资源。应在程序退出前调用。调用后需要重新初始化才能使用。
+
+---
+
+#### strategy_get_service_instance
+
+获取策略服务实例。
+
+**函数签名：**
+```c
+void* strategy_get_service_instance(void);
+```
+
+**返回值：**
+- 策略服务实例指针
+
+**说明：**
+获取当前策略服务的实例指针，用于高级操作。
+
+---
+
+### 策略实例管理接口
+
+#### strategy_create_instance
+
+创建策略实例。
+
+**函数签名：**
+```c
+int strategy_create_instance(const char* strategy_id, const char* config);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `config`: JSON格式配置字符串，NULL使用默认配置
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+创建一个新的策略实例。配置参数为JSON格式字符串，可以为NULL使用默认配置。
+
+---
+
+#### strategy_start_instance
+
+启动指定策略实例。
+
+**函数签名：**
+```c
+int strategy_start_instance(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+启动指定的策略实例，使其开始运行和处理数据。
+
+---
+
+#### strategy_stop_instance
+
+停止指定策略实例。
+
+**函数签名：**
+```c
+int strategy_stop_instance(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+停止指定的策略实例。停止后策略不再处理数据，但实例仍然存在。
+
+---
+
+#### strategy_destroy_instance
+
+销毁指定策略实例。
+
+**函数签名：**
+```c
+int strategy_destroy_instance(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+销毁指定的策略实例，释放所有相关资源。
+
+---
+
+#### strategy_instance_exists
+
+检查策略实例是否存在。
+
+**函数签名：**
+```c
+int strategy_instance_exists(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `1`: 存在
+- `0`: 不存在
+
+**说明：**
+检查指定ID的策略实例是否已创建。
+
+---
+
+#### strategy_instance_is_active
+
+检查策略实例是否活跃（运行中）。
+
+**函数签名：**
+```c
+int strategy_instance_is_active(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `1`: 活跃
+- `0`: 未活跃
+
+**说明：**
+检查指定策略实例是否正在运行。
+
+---
+
+#### strategy_get_instance_status
+
+获取策略实例状态。
+
+**函数签名：**
+```c
+int strategy_get_instance_status(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- 状态值
+- `-1`: 策略不存在
+
+**说明：**
+获取指定策略实例的当前状态。
+
+---
+
+### 批量策略操作接口
+
+#### strategy_start_all_instances
+
+启动所有策略实例。
+
+**函数签名：**
+```c
+int strategy_start_all_instances(void);
+```
+
+**返回值：**
+- 成功启动的策略数量
+
+**说明：**
+批量启动所有已创建的策略实例。
+
+---
+
+#### strategy_stop_all_instances
+
+停止所有活跃策略实例。
+
+**函数签名：**
+```c
+int strategy_stop_all_instances(void);
+```
+
+**返回值：**
+- 成功停止的策略数量
+
+**说明：**
+批量停止所有正在运行的策略实例。
+
+---
+
+#### strategy_destroy_all_instances
+
+销毁所有策略实例。
+
+**函数签名：**
+```c
+int strategy_destroy_all_instances(void);
+```
+
+**返回值：**
+- 成功销毁的策略数量
+
+**说明：**
+批量销毁所有策略实例，释放所有相关资源。
+
+---
+
+### 状态查询接口
+
+#### strategy_is_service_running
+
+检查服务是否正在运行。
+
+**函数签名：**
+```c
+int strategy_is_service_running(void);
+```
+
+**返回值：**
+- `1`: 运行中
+- `0`: 已停止
+
+**说明：**
+检查策略服务是否处于运行状态。
+
+---
+
+#### strategy_is_service_initialized
+
+检查服务是否已初始化。
+
+**函数签名：**
+```c
+int strategy_is_service_initialized(void);
+```
+
+**返回值：**
+- `1`: 已初始化
+- `0`: 未初始化
+
+**说明：**
+检查策略服务是否已经完成初始化。
+
+---
+
+#### strategy_get_active_instance_count
+
+获取活跃策略实例数量。
+
+**函数签名：**
+```c
+size_t strategy_get_active_instance_count(void);
+```
+
+**返回值：**
+- 活跃策略数量
+
+**说明：**
+获取当前正在运行的策略实例数量。
+
+---
+
+#### strategy_get_last_error
+
+获取最后的错误信息。
+
+**函数签名：**
+```c
+const char* strategy_get_last_error(void);
+```
+
+**返回值：**
+- 错误描述字符串
+
+**说明：**
+获取最近一次操作的错误信息，用于错误诊断。
+
+---
+
+#### strategy_get_registered_strategy_ids
+
+获取所有已注册策略ID列表（JSON格式）。
+
+**函数签名：**
+```c
+const char* strategy_get_registered_strategy_ids(void);
+```
+
+**返回值：**
+- JSON数组字符串，包含所有已注册策略ID
+
+**说明：**
+返回所有已注册策略的ID列表，格式为JSON数组。
+
+---
+
+#### strategy_get_active_strategy_ids
+
+获取所有活跃策略ID列表（JSON格式）。
+
+**函数签名：**
+```c
+const char* strategy_get_active_strategy_ids(void);
+```
+
+**返回值：**
+- JSON数组字符串，包含所有活跃策略ID
+
+**说明：**
+返回所有正在运行的策略ID列表，格式为JSON数组。
+
+---
+
+#### strategy_get_thread_pool_status
+
+获取线程池状态信息（JSON格式）。
+
+**函数签名：**
+```c
+const char* strategy_get_thread_pool_status(void);
+```
+
+**返回值：**
+- JSON格式的线程池状态信息
+
+**说明：**
+获取策略服务线程池的状态信息，包括线程数量、任务队列等。
+
+---
+
+### 策略配置管理接口
+
+#### strategy_update_instance_config
+
+更新指定策略配置。
+
+**函数签名：**
+```c
+int strategy_update_instance_config(const char* strategy_id, const char* config);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `config`: JSON格式配置字符串
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+动态更新指定策略的配置参数。配置为JSON格式字符串。
+
+---
+
+#### strategy_get_instance_config
+
+获取指定策略配置。
+
+**函数签名：**
+```c
+const char* strategy_get_instance_config(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- JSON格式配置字符串
+
+**说明：**
+获取指定策略的当前配置信息，返回JSON格式字符串。
+
+---
+
+### 挂单队列管理接口
+
+#### strategy_add_order_queue
+
+新增挂单到指定策略。
+
+**函数签名：**
+```c
+int strategy_add_order_queue(const char* strategy_id, const char* order);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `order`: JSON格式挂单字符串
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+向指定策略添加一个新的挂单。挂单信息为JSON格式字符串。
+
+---
+
+#### strategy_update_order_queue
+
+更新指定挂单。
+
+**函数签名：**
+```c
+int strategy_update_order_queue(const char* strategy_id, int64_t order_id, const char* order);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `order_id`: 挂单ID
+- `order`: JSON格式挂单字符串
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+更新指定策略中的指定挂单信息。
+
+---
+
+#### strategy_cancel_order_queue
+
+取消指定挂单。
+
+**函数签名：**
+```c
+int strategy_cancel_order_queue(const char* strategy_id, int64_t order_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `order_id`: 挂单ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+取消指定策略中的指定挂单。
+
+---
+
+#### strategy_remove_order_queue
+
+删除指定策略的挂单。
+
+**函数签名：**
+```c
+int strategy_remove_order_queue(const char* strategy_id, int64_t order_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `order_id`: 挂单ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+从指定策略中删除指定的挂单。
+
+---
+
+#### strategy_batch_add_order_queue
+
+批量新增挂单到指定策略。
+
+**函数签名：**
+```c
+int strategy_batch_add_order_queue(const char* strategy_id, const char* orders);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `orders`: JSON格式挂单数组字符串
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+批量向指定策略添加多个挂单。挂单信息为JSON数组格式字符串。
+
+---
+
+#### strategy_cancel_all_active_order_queue
+
+取消指定策略的所有活跃挂单。
+
+**函数签名：**
+```c
+int strategy_cancel_all_active_order_queue(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+批量取消指定策略的所有活跃挂单。
+
+---
+
+#### strategy_remove_all_active_order_queue
+
+删除指定策略的所有活跃挂单。
+
+**函数签名：**
+```c
+int strategy_remove_all_active_order_queue(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+批量删除指定策略的所有活跃挂单。
+
+---
+
+#### strategy_get_order_queue
+
+获取指定策略的挂单队列。
+
+**函数签名：**
+```c
+const char* strategy_get_order_queue(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- JSON格式挂单数组字符串
+
+**说明：**
+获取指定策略的所有挂单信息，返回JSON数组格式字符串。
+
+---
+
+### 策略数据获取接口
+
+#### strategy_get_instance_data
+
+获取指定策略运行时数据。
+
+**函数签名：**
+```c
+const char* strategy_get_instance_data(const char* strategy_id, const char* data_type);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `data_type`: 数据类型（如 "orders", "positions", "metrics", "status"）
+
+**返回值：**
+- JSON格式数据字符串
+- `NULL`: 不支持该数据类型或策略不存在
+
+**说明：**
+获取指定策略的运行时数据。数据类型可以是订单、持仓、指标、状态等。
+
+---
+
+#### strategy_get_available_data_types
+
+获取指定策略支持的所有数据类型列表。
+
+**函数签名：**
+```c
+const char* strategy_get_available_data_types(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- JSON数组字符串，包含所有支持的data_type
+
+**说明：**
+返回指定策略支持的所有数据类型列表。
+
+---
+
+#### strategy_set_data_change_callback
+
+设置指定策略数据变化回调函数。
+
+**函数签名：**
+```c
+StrategyDataCallbackHandle strategy_set_data_change_callback(const char* strategy_id, StrategyDataCallbackType callback);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `callback`: 回调函数指针
+
+**返回值：**
+- 回调句柄，可用于后续删除回调
+
+**说明：**
+为指定策略设置数据变化回调函数。回调函数在策略数据变化时执行，应避免阻塞操作。
+
+---
+
+#### strategy_remove_data_change_callback
+
+移除指定策略数据变化回调函数。
+
+**函数签名：**
+```c
+int strategy_remove_data_change_callback(const char* strategy_id, StrategyDataCallbackHandle handle);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+- `handle`: 回调句柄
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+移除之前设置的数据变化回调函数。
+
+---
+
+### 策略元信息查询接口
+
+#### strategy_get_strategy_name
+
+获取策略名称。
+
+**函数签名：**
+```c
+const char* strategy_get_strategy_name(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- 策略名称字符串
+
+**说明：**
+获取指定策略的名称。
+
+---
+
+#### strategy_get_strategy_description
+
+获取策略描述。
+
+**函数签名：**
+```c
+const char* strategy_get_strategy_description(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- 策略描述字符串
+
+**说明：**
+获取指定策略的详细描述信息。
+
+---
+
+#### strategy_is_strategy_registered
+
+检查策略是否已注册。
+
+**函数签名：**
+```c
+int strategy_is_strategy_registered(const char* strategy_id);
+```
+
+**参数：**
+- `strategy_id`: 策略ID
+
+**返回值：**
+- `1`: 已注册
+- `0`: 未注册
+
+**说明：**
+检查指定ID的策略是否已在系统中注册。
+
+---
+
+### 依赖服务管理接口
+
+#### strategy_set_quote_parser
+
+设置行情解析器。
+
+**函数签名：**
+```c
+int strategy_set_quote_parser(void* quote_parser);
+```
+
+**参数：**
+- `quote_parser`: 行情解析器指针（来自行情服务）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+设置策略服务使用的行情解析器，用于获取实时行情数据。
+
+---
+
+#### strategy_set_trade_handler
+
+设置交易处理器。
+
+**函数签名：**
+```c
+int strategy_set_trade_handler(void* trade_handler);
+```
+
+**参数：**
+- `trade_handler`: 交易处理器指针（来自交易服务）
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+设置策略服务使用的交易处理器，用于执行交易操作。
+
+---
+
+#### strategy_set_db_manager
+
+设置数据库管理器。
+
+**函数签名：**
+```c
+int strategy_set_db_manager(void* db_manager);
+```
+
+**参数：**
+- `db_manager`: 数据库管理器指针
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+设置策略服务使用的数据库管理器，用于数据持久化。
+
+---
+
+#### strategy_get_db_manager
+
+获取数据库管理器。
+
+**函数签名：**
+```c
+void* strategy_get_db_manager(void);
+```
+
+**返回值：**
+- 数据库管理器指针
+
+**说明：**
+获取当前策略服务使用的数据库管理器。
+
+---
+
+#### strategy_get_quote_parser
+
+获取行情解析器。
+
+**函数签名：**
+```c
+void* strategy_get_quote_parser(void);
+```
+
+**返回值：**
+- 行情解析器指针
+
+**说明：**
+获取当前策略服务使用的行情解析器。
+
+---
+
+#### strategy_get_trade_handler
+
+获取交易处理器。
+
+**函数签名：**
+```c
+void* strategy_get_trade_handler(void);
+```
+
+**返回值：**
+- 交易处理器指针
+
+**说明：**
+获取当前策略服务使用的交易处理器。
+
+---
+
+#### strategy_set_trading_time_manager
+
+设置交易时间管理器。
+
+**函数签名：**
+```c
+int strategy_set_trading_time_manager(void* trading_time_manager);
+```
+
+**参数：**
+- `trading_time_manager`: 交易时间管理器指针
+
+**返回值：**
+- `0`: 成功
+- 负数: 失败
+
+**说明：**
+设置策略服务使用的交易时间管理器，用于管理交易时间段。
+
+---
+
+#### strategy_get_trading_time_manager
+
+获取交易时间管理器。
+
+**函数签名：**
+```c
+void* strategy_get_trading_time_manager(void);
+```
+
+**返回值：**
+- 交易时间管理器指针
+
+**说明：**
+获取当前策略服务使用的交易时间管理器。
+
+---
+
+### 数据分发接口
+
+#### strategy_dispatch_index_data
+
+分发指数数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_index_data(const void* data);
+```
+
+**参数：**
+- `data`: 指数数据指针
+
+**说明：**
+将指数行情数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_depth_data
+
+分发深度数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_depth_data(const void* data);
+```
+
+**参数：**
+- `data`: 深度数据指针
+
+**说明：**
+将深度行情数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_depth_fifty_data
+
+分发50笔深度数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_depth_fifty_data(const void* data);
+```
+
+**参数：**
+- `data`: 50笔深度数据指针
+
+**说明：**
+将50笔深度行情数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_entrust_data
+
+分发委托数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_entrust_data(const void* data);
+```
+
+**参数：**
+- `data`: 委托数据指针
+
+**说明：**
+将委托数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_trade_data
+
+分发成交数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_trade_data(const void* data);
+```
+
+**参数：**
+- `data`: 成交数据指针
+
+**说明：**
+将成交数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_order_rtn_data
+
+分发订单数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_order_rtn_data(const void* data);
+```
+
+**参数：**
+- `data`: 订单数据指针
+
+**说明：**
+将订单回报数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_order_query_data
+
+分发订单查询数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_order_query_data(const void* data);
+```
+
+**参数：**
+- `data`: 订单查询数据指针
+
+**说明：**
+将订单查询结果数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_fill_data
+
+分发成交回报数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_fill_data(const void* data);
+```
+
+**参数：**
+- `data`: 成交回报数据指针
+
+**说明：**
+将成交回报数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_position_data
+
+分发持仓数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_position_data(const void* data);
+```
+
+**参数：**
+- `data`: 持仓数据指针
+
+**说明：**
+将持仓数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_account_data
+
+分发账户数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_account_data(const void* data);
+```
+
+**参数：**
+- `data`: 账户数据指针
+
+**说明：**
+将账户数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_trade_error
+
+分发交易错误到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_trade_error(int error_code, const char* error_msg);
+```
+
+**参数：**
+- `error_code`: 错误代码
+- `error_msg`: 错误信息
+
+**说明：**
+将交易错误信息分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_order_rsp_data
+
+分发委托响应数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_order_rsp_data(const void* data);
+```
+
+**参数：**
+- `data`: 委托响应数据指针
+
+**说明：**
+将委托响应数据分发到所有正在运行的策略实例。
+
+---
+
+#### strategy_dispatch_cancel_rsp_data
+
+分发撤单响应数据到所有活跃策略。
+
+**函数签名：**
+```c
+void strategy_dispatch_cancel_rsp_data(const void* data);
+```
+
+**参数：**
+- `data`: 撤单响应数据指针
+
+**说明：**
+将撤单响应数据分发到所有正在运行的策略实例。
+
+---
+
+### 全局策略模块管理接口
+
+#### strategy_get_registered_modules
+
+获取已注册的策略模块列表（JSON格式）。
+
+**函数签名：**
+```c
+const char* strategy_get_registered_modules(void);
+```
+
+**返回值：**
+- JSON数组字符串，包含所有已注册模块名称
+
+**说明：**
+获取系统中所有已注册的策略模块列表，返回JSON数组格式。
+
+---
+
+#### strategy_is_module_registered
+
+检查策略模块是否已注册。
+
+**函数签名：**
+```c
+int strategy_is_module_registered(const char* module_name);
+```
+
+**参数：**
+- `module_name`: 模块名称
+
+**返回值：**
+- `1`: 已注册
+- `0`: 未注册
+
+**说明：**
+检查指定名称的策略模块是否已在系统中注册。
+
+---

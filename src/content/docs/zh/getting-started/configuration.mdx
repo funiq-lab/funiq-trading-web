@@ -1,0 +1,806 @@
+---
+title: 配置文件
+hide_breadcrumbs: false
+---
+
+Funiq Trading 系统的各项配置，包括环境变量、系统配置、行情配置、交易配置和策略配置。
+
+## 目录
+
+- [环境变量配置](#环境变量配置)
+- [系统配置](#系统配置)
+- [行情配置](#行情配置)
+- [交易配置](#交易配置)
+- [策略配置](#策略配置)
+
+---
+
+## 环境变量配置
+
+环境变量配置文件通常为 `.env`，系统启动时会自动加载该文件。
+
+### 服务配置
+
+| 环境变量 | 类型 | 说明 | 默认值 | 示例 |
+|---------|------|------|--------|------|
+| `QUOTE_CONFIG_FILE` | string | 行情配置文件路径 | - | `./quote_config.json` |
+| `TRADE_CONFIG_FILE` | string | 交易配置文件路径 | - | `./trade_config.json` |
+| `STRATEGY_CONFIG_FILE` | string | 策略配置文件路径 | - | `./strategy_config.json` |
+| `SYSTEM_CONFIG_FILE` | string | 系统配置文件路径 | - | `./system_config.json` |
+| `FT_DB_PATH` | string | 数据库文件路径 | - | `data/trading.db` |
+| `FT_DB_MIGRATION_CONFIG_PATH` | string | 数据库迁移配置路径 | - | `migrations/migration.config.ini` |
+
+### 网络配置
+
+| 环境变量 | 类型 | 说明 | 默认值 | 示例 |
+|---------|------|------|--------|------|
+| `HTTP_SERVER_ADDRESS` | string | HTTP服务器监听地址 | `0.0.0.0` | `0.0.0.0` |
+| `HTTP_SERVER_PORT` | integer | HTTP服务器监听端口 | `8080` | `8080` |
+| `HTTP_SERVER_THREADS` | integer | HTTP服务器工作线程数 | `4` | `4` |
+
+### 日志配置
+
+| 环境变量 | 类型 | 说明 | 默认值 | 示例 |
+|---------|------|------|--------|------|
+| `LOG_ENABLED` | boolean | 是否启用日志 | `true` | `true` |
+| `LOG_LEVEL` | string | 日志级别 | `debug` | `debug`, `info`, `warn`, `error` |
+| `LOG_CONSOLE` | boolean | 是否输出到控制台 | `true` | `true` |
+| `LOG_FILE_ENABLED` | boolean | 是否写入日志文件 | `true` | `true` |
+| `LOG_ASYNC` | boolean | 是否使用异步日志 | `true` | `true` |
+| `LOG_FILE_DIR` | string | 日志文件目录 | `logs` | `logs` |
+| `LOG_MAX_FILES` | integer | 日志文件最大保留数量 | `30` | `30` |
+| `LOG_FLUSH_LEVEL` | string | 日志刷新级别 | `debug` | `debug`, `info`, `warn`, `error` |
+
+### 配置示例
+
+```bash
+# Service configuration
+QUOTE_CONFIG_FILE=./quote_config.json
+TRADE_CONFIG_FILE=./trade_config.json
+STRATEGY_CONFIG_FILE=./strategy_config.json
+SYSTEM_CONFIG_FILE=./system_config.json
+FT_DB_PATH=data/trading.db
+FT_DB_MIGRATION_CONFIG_PATH=migrations/migration.config.ini
+
+# Network configuration
+HTTP_SERVER_ADDRESS=0.0.0.0
+HTTP_SERVER_PORT=8080
+HTTP_SERVER_THREADS=4
+
+# Logger configuration
+LOG_ENABLED=true
+LOG_LEVEL=debug
+LOG_CONSOLE=true
+LOG_FILE_ENABLED=true
+LOG_ASYNC=true
+LOG_FILE_DIR=logs
+LOG_MAX_FILES=30
+LOG_FLUSH_LEVEL=debug
+```
+
+---
+
+## 系统配置
+
+系统配置文件用于定义交易时间规则、节假日、交易日等全局系统参数。
+
+### 配置文件结构
+
+```json
+{
+  "trading_time": [[开始小时, 开始分钟, 结束小时, 结束分钟], ...],
+  "holiday": ["节假日1", "节假日2", ...],
+  "trading_weekdays": [1, 2, 3, 4, 5]
+}
+```
+
+### 配置项说明
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `trading_time` | array | 否 | 交易时间段数组，每个元素为 `[开始小时, 开始分钟, 结束小时, 结束分钟]`。如果不配置，系统默认为 7×24 小时模式 |
+| `holiday` | array | 否 | 节假日数组，格式为 `YYYY-MM-DD`。如果不配置，系统忽略节假日 |
+| `trading_weekdays` | array | 否 | 交易日（周几），1-7 分别代表周一到周日。如果不配置，默认为全周 `[1,2,3,4,5,6,7]` |
+
+### 交易时间控制模式
+
+系统根据配置自动决定运行模式：
+
+#### 7×24 小时模式（默认）
+- 条件：不配置 `trading_time` 字段
+- 行为：系统全天候运行，不受时间限制
+
+#### 交易时间段模式
+- 条件：配置 `trading_time` 字段
+- 行为：仅在指定时间段内运行
+
+#### 节假日控制
+- 条件：配置 `holiday` 字段
+- 行为：在节假日不运行
+- 不配置则忽略节假日
+
+### 配置示例
+
+#### 示例 1：中国 A 股交易时间
+
+```json
+{
+  "trading_time": [
+    [9, 30, 11, 30],
+    [13, 0, 15, 0]
+  ],
+  "holiday": [
+    "2024-01-01",
+    "2024-02-10",
+    "2024-02-11",
+    "2024-02-12"
+  ],
+  "trading_weekdays": [1, 2, 3, 4, 5]
+}
+```
+
+#### 示例 2：7×24 小时模式（数字货币等）
+
+```json
+{
+  "holiday": [],
+  "trading_weekdays": [1, 2, 3, 4, 5, 6, 7]
+}
+```
+
+#### 示例 3：美股交易时间
+
+```json
+{
+  "trading_time": [
+    [21, 30, 23, 59],
+    [0, 0, 4, 0]
+  ],
+  "holiday": ["2024-12-25", "2024-07-04"],
+  "trading_weekdays": [1, 2, 3, 4, 5]
+}
+```
+
+### 注意事项
+
+1. **时间格式**：24 小时制，范围 0-23（小时），0-59（分钟）
+2. **日期格式**：`YYYY-MM-DD`
+3. **跨日处理**：如果交易时间跨越午夜，需要拆分成多个时间段
+4. **时区问题**：所有时间均使用系统本地时区
+
+---
+
+## 行情配置
+
+行情配置文件定义行情数据源、订阅规则、性能参数和 Mock 测试等。
+
+### 配置文件结构
+
+```json
+{
+  "parsers": [
+    {
+      "id": "parser_id",
+      "active": true,
+      "module": "module_name",
+      "config": { /* 解析器配置 */ },
+      "data": [ /* 数据输出配置 */ ]
+    }
+  ]
+}
+```
+
+### 解析器配置（Parser）
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `id` | string | 是 | 解析器唯一标识符 |
+| `active` | boolean | 是 | 是否启用该解析器 |
+| `module` | string | 是 | 解析器模块名称（动态库名称） |
+| `config` | object | 是 | 解析器详细配置 |
+| `data` | array | 否 | 数据输出配置数组 |
+
+### 解析器详细配置（config）
+
+#### 基础配置
+
+| 配置项 | 类型 | 必填 | 默认值 | 说明 |
+|-------|------|------|--------|------|
+| `callback_mode` | boolean | 否 | `false` | 是否使用回调模式推送数据 |
+| `extended_config_file` | string | 否 | - | 扩展配置文件路径（由具体解析器使用） |
+
+#### 订阅配置（subscription）
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `markets` | array | 否 | 市场列表，支持 `"sse"`（上交所）、`"szse"`（深交所） |
+| `data_types` | array | 否 | 数据类型列表，支持 `"index"`、`"depth"`、`"entrust"`、`"trade"`、`"depth_fifty"` |
+| `securities` | array | 否 | 证券代码列表，可以是字符串数组或对象数组 |
+
+#### 性能统计配置（performance）
+
+| 配置项 | 类型 | 必填 | 默认值 | 说明 |
+|-------|------|------|--------|------|
+| `enabled` | boolean | 否 | `false` | 是否启用性能统计 |
+| `report_interval_ms` | integer | 否 | `5000` | 性能报告间隔（毫秒） |
+| `enable_latency_stats` | boolean | 否 | `false` | 是否启用延迟统计 |
+| `enable_throughput_stats` | boolean | 否 | `false` | 是否启用吞吐量统计 |
+
+#### Mock 模式配置（mock）
+
+| 配置项 | 类型 | 必填 | 默认值 | 说明 |
+|-------|------|------|--------|------|
+| `enabled` | boolean | 否 | `false` | 是否启用 Mock 模式 |
+| `mock_data_file` | string | 否 | - | Mock 数据文件路径（二进制格式） |
+| `loop_replay` | boolean | 否 | `true` | 是否循环回放数据 |
+| `csv_mode` | boolean | 否 | `false` | 是否使用 CSV 模式 |
+| `csv_files` | object | 否 | - | CSV 文件配置对象 |
+
+##### CSV 文件配置（csv_files）
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `depth` | string | 否 | 十档行情 CSV 文件路径 |
+| `index` | string | 否 | 指数行情 CSV 文件路径 |
+| `entrust` | string | 否 | 委托队列 CSV 文件路径 |
+| `trade` | string | 否 | 逐笔成交 CSV 文件路径 |
+| `depth_fifty` | string | 否 | 五十档行情 CSV 文件路径 |
+
+### 数据输出配置（data）
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `type` | string | 是 | 输出类型：`"shared_memory"`、`"file"`、`"udp"` |
+| `active` | boolean | 是 | 是否启用该输出 |
+| `config` | object | 否 | 输出详细配置 |
+
+#### 共享内存输出配置
+
+```json
+{
+  "type": "shared_memory",
+  "active": true,
+  "config": {
+    "name": "quote_shm_mock"
+  }
+}
+```
+
+#### 文件输出配置
+
+```json
+{
+  "type": "file",
+  "active": true,
+  "config": {
+    "path": "./test/data/sample_market_data",
+    "format": "binary"
+  }
+}
+```
+
+### 完整配置示例
+
+#### 示例 1：实盘行情配置
+
+```json
+{
+  "parsers": [
+    {
+      "id": "quote_parser_prod",
+      "active": true,
+      "module": "ft_ksqmd_quote_parser",
+      "config": {
+        "callback_mode": true,
+        "markets": ["sse", "szse"],
+        "data_types": ["index", "depth", "entrust", "trade", "depth_fifty"],
+        "extended_config_file": "./api_config_ex.xml",
+        "performance": {
+          "enabled": true,
+          "report_interval_ms": 5000,
+          "enable_latency_stats": true,
+          "enable_throughput_stats": true
+        }
+      }
+    }
+  ]
+}
+```
+
+#### 示例 2：Mock 测试配置
+
+```json
+{
+  "parsers": [
+    {
+      "id": "mock_parser_test",
+      "active": true,
+      "module": "ft_ksqmd_quote_parser",
+      "config": {
+        "callback_mode": true,
+        "extended_config_file": "./api_config_ex.xml",
+        "performance": {
+          "enabled": false,
+          "report_interval_ms": 5000,
+          "enable_latency_stats": true,
+          "enable_throughput_stats": true
+        },
+        "mock": {
+          "enabled": true,
+          "mock_data_file": "./test/data/sample_market_data",
+          "loop_replay": true,
+          "csv_mode": true,
+          "csv_files": {
+            "depth": "mock_data_samples/depth_data.csv",
+            "index": "mock_data_samples/index_data.csv",
+            "entrust": "mock_data_samples/entrust_data.csv",
+            "trade": "mock_data_samples/trade_data.csv",
+            "depth_fifty": "mock_data_samples/depth_fifty_data.csv"
+          }
+        }
+      },
+      "data": [
+        {
+          "type": "shared_memory",
+          "active": false,
+          "config": {
+            "name": "quote_shm_mock"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 注意事项
+
+1. **回调模式**：推荐在策略交易场景使用 `callback_mode: true` 以获得更低的延迟
+3. **Mock 模式**：仅用于开发测试，不能用于实盘交易
+
+---
+
+## 交易配置
+
+交易配置文件定义交易接口、账户信息、登录方式和性能参数等。
+
+### 配置文件结构
+
+```json
+{
+  "parsers": [
+    {
+      "id": "handler_id",
+      "active": true,
+      "module": "module_name",
+      "config": { /* 交易处理器配置 */ },
+      "data": [ /* 数据输出配置 */ ]
+    }
+  ]
+}
+```
+
+### 交易处理器配置（Parser）
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `id` | string | 是 | 交易处理器唯一标识符 |
+| `active` | boolean | 是 | 是否启用该处理器 |
+| `module` | string | 是 | 交易处理器模块名称（动态库名称） |
+| `config` | object | 是 | 交易处理器详细配置 |
+| `data` | array | 否 | 数据输出配置数组 |
+
+### 处理器详细配置（config）
+
+#### 基础配置
+
+| 配置项 | 类型 | 必填 | 默认值 | 说明 |
+|-------|------|------|--------|------|
+| `callback_mode` | boolean | 否 | `true` | 是否使用回调模式推送交易回报 |
+| `extended_config_file` | string | 否 | - | 扩展配置文件路径（由具体处理器使用） |
+| `login_mode` | integer | 否 | `1` | 登录模式：`1` = 客户号（cust_id），`2` = 资金账号（fund_account_id） |
+
+#### 账户配置（accounts）
+
+账户配置是一个数组，每个账户包含以下字段：
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `login_id` | string | 是 | 登录账号 |
+| `cust_id` | string | 是 | 客户号 |
+| `fund_account_id` | string | 是 | 资金账号 |
+| `account_id_sh` | string | 条件 | 上海证券账号（至少需要上海或深圳之一） |
+| `account_id_sz` | string | 条件 | 深圳证券账号（至少需要上海或深圳之一） |
+| `branch_id` | string | 是 | 营业部代码 |
+| `password` | string | 是 | 交易密码 |
+
+#### 性能统计配置（performance）
+
+| 配置项 | 类型 | 必填 | 默认值 | 说明 |
+|-------|------|------|--------|------|
+| `enabled` | boolean | 否 | `false` | 是否启用性能统计 |
+| `report_interval_ms` | integer | 否 | `1000` | 性能报告间隔（毫秒） |
+| `enable_latency_stats` | boolean | 否 | `false` | 是否启用延迟统计 |
+
+### 数据输出配置（data）
+
+配置方式与行情配置相同，支持 `shared_memory`、`file`、`udp` 三种输出类型。
+
+### 完整配置示例
+
+#### 示例 1：单账户配置
+
+```json
+{
+  "parsers": [
+    {
+      "id": "trade_prod",
+      "active": true,
+      "module": "ft_atp_trade_handler",
+      "config": {
+        "callback_mode": true,
+        "extended_config_file": "./atp_quant_api.xml",
+        "login_mode": 2,
+        "accounts": [
+          {
+            "login_id": "10018100xxxx",
+            "cust_id": "10187xxxx",
+            "fund_account_id": "10018100xxxx",
+            "account_id_sz": "017510xxxx",
+            "account_id_sh": "A16372xxxx",
+            "branch_id": "xxxx",
+            "password": "12xxxx"
+          }
+        ],
+        "performance": {
+          "enabled": true,
+          "report_interval_ms": 5000,
+          "enable_latency_stats": true
+        }
+      },
+      "data": [
+        {
+          "type": "shared_memory",
+          "active": false,
+          "config": {
+            "name": "trade_shm_prod"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 示例 2：多账户配置
+
+```json
+{
+  "parsers": [
+    {
+      "id": "trade_multi",
+      "active": true,
+      "module": "ft_atp_trade_handler",
+      "config": {
+        "callback_mode": true,
+        "extended_config_file": "./atp_quant_api.xml",
+        "login_mode": 1,
+        "accounts": [
+          {
+            "login_id": "1001810xxxx",
+            "cust_id": "10187xxxx",
+            "fund_account_id": "10018100xxxx",
+            "account_id_sz": "017510xxxx",
+            "account_id_sh": "A16372xxxx",
+            "branch_id": "xxxx",
+            "password": "12xxxx"
+          },
+          {
+            "login_id": "1001810xxxx",
+            "cust_id": "10187xxxx",
+            "fund_account_id": "10018100xxxx",
+            "account_id_sz": "017510xxxx",
+            "account_id_sh": "A16372xxxx",
+            "branch_id": "xxxx",
+            "password": "12xxxx"
+          }
+        ],
+        "performance": {
+          "enabled": true,
+          "report_interval_ms": 5000,
+          "enable_latency_stats": true
+        }
+      }
+    }
+  ]
+}
+```
+
+### 注意事项
+
+1. **登录模式**：根据券商要求选择 `login_mode`，常用值为 `1`（客户号）或 `2`（资金账号）
+2. **账户验证**：系统会验证账户配置的完整性，至少需要配置上海或深圳一个证券账号
+3. **密码安全**：不使用硬编码密码或保证生产环境跟外网隔离，控制访问权限
+4. **回调模式**：交易系统强烈建议使用 `callback_mode: true` 以接收实时回报
+5. **性能监控**：建议启用性能统计以监控交易延迟
+
+---
+
+## 策略配置
+
+策略配置文件定义策略实例、策略参数、线程池和 CPU 绑核等。
+
+### 配置文件结构
+
+```json
+{
+  "strategies": [ /* 策略实例数组 */ ],
+  "cores": [ /* CPU 核心列表 */ ],
+  "thread_count": 100
+}
+```
+
+### 全局配置
+
+| 配置项 | 类型 | 必填 | 默认值 | 说明 |
+|-------|------|------|--------|------|
+| `strategies` | array | 是 | - | 策略实例配置数组 |
+| `cores` | array | 否 | `[]` | CPU 绑核配置，空数组表示不绑核 |
+| `thread_count` | integer | 否 | 硬件并发数 | 策略线程池大小 |
+
+### 策略实例配置（strategies）
+
+每个策略实例包含以下配置项：
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `id` | string | 是 | 策略实例唯一标识符 |
+| `name` | string | 否 | 策略名称（用于显示） |
+| `description` | string | 否 | 策略描述 |
+| `module` | string | 是 | 策略模块名称（对应策略类名） |
+| `config` | object | 是 | 策略详细配置（策略相关） |
+
+### 策略详细配置（config）
+
+策略配置根据具体策略而异，以下是常用配置项：
+
+#### 通用配置项
+
+| 配置项 | 类型 | 说明 |
+|-------|------|------|
+| `account_id` | string | 关联的交易账户 ID（资金账号或客户号） |
+| `enable_performance_logging` | boolean | 是否启用性能日志 |
+| `performance_sample_count` | integer | 性能采样数量 |
+
+#### 止盈止损策略配置（StopProfitLossStrategy）
+
+| 配置项 | 类型 | 必填 | 说明 |
+|-------|------|------|------|
+| `monitor_stocks` | array | 是 | 监控的股票代码列表 |
+| `profit_threshold` | number | 是 | 止盈阈值（百分比） |
+| `loss_threshold` | number | 是 | 止损阈值（百分比） |
+| `order_timeout_seconds` | integer | 否 | 订单超时时间（秒） |
+| `order_quantity` | integer | 是 | 下单数量（股） |
+| `account_id` | string | 是 | 关联的账户 ID |
+
+### 完整配置示例
+
+#### 示例 1：单策略配置
+
+```json
+{
+  "strategies": [
+    {
+      "id": "stop_profit_loss_001",
+      "name": "止盈止损策略",
+      "description": "基于价格变化的止盈止损交易策略",
+      "module": "StopProfitLossStrategy",
+      "config": {
+        "monitor_stocks": ["000001", "000002", "600000", "600036"],
+        "profit_threshold": 1.0,
+        "loss_threshold": 0.5,
+        "order_timeout_seconds": 10,
+        "order_quantity": 100,
+        "account_id": "101871021",
+        "enable_performance_logging": true,
+        "performance_sample_count": 5
+      }
+    }
+  ],
+  "cores": [0, 2, 4, 6, 8],
+  "thread_count": 100
+}
+```
+
+#### 示例 2：多策略配置
+
+```json
+{
+  "strategies": [
+    {
+      "id": "stop_profit_loss_001",
+      "name": "止盈止损策略-账户1",
+      "description": "基于价格变化的止盈止损交易策略",
+      "module": "StopProfitLossStrategy",
+      "config": {
+        "monitor_stocks": ["000001", "000002", "600000", "600036"],
+        "profit_threshold": 1.0,
+        "loss_threshold": 0.5,
+        "order_timeout_seconds": 10,
+        "order_quantity": 100,
+        "account_id": "101871021",
+        "enable_performance_logging": true,
+        "performance_sample_count": 5
+      }
+    },
+    {
+      "id": "stop_profit_loss_002",
+      "name": "止盈止损策略-账户2",
+      "description": "基于价格变化的止盈止损交易策略",
+      "module": "StopProfitLossStrategy",
+      "config": {
+        "monitor_stocks": ["000003", "000004"],
+        "profit_threshold": 3.0,
+        "loss_threshold": 1.5,
+        "order_timeout_seconds": 10,
+        "order_quantity": 200,
+        "account_id": "101871022",
+        "enable_performance_logging": false,
+        "performance_sample_count": 10
+      }
+    }
+  ],
+  "cores": [0, 2, 4, 6, 8],
+  "thread_count": 100
+}
+```
+
+#### 示例 3：无 CPU 绑核配置
+
+```json
+{
+  "strategies": [
+    {
+      "id": "strategy_001",
+      "name": "测试策略",
+      "module": "TestStrategy",
+      "config": {
+        "account_id": "101871021"
+      }
+    }
+  ],
+  "cores": [],
+  "thread_count": 50
+}
+```
+
+### CPU 绑核说明
+
+#### cores 配置
+
+`cores` 数组指定策略线程池绑定的 CPU 核心列表：
+
+- **空数组 `[]`**：不进行 CPU 绑核，线程由操作系统自由调度
+- **指定核心**：如 `[0, 2, 4, 6, 8]`，线程将依次绑定到指定的 CPU 核心
+
+#### 绑核策略
+
+系统采用轮询方式将线程绑定到 CPU 核心：
+
+```
+线程 0 -> cores[0]
+线程 1 -> cores[1]
+线程 2 -> cores[2]
+...
+线程 N -> cores[N % cores.length]
+```
+
+#### 绑核优势
+
+1. **降低延迟**：减少 CPU 缓存失效和上下文切换
+2. **提高性能**：避免线程在不同核心间迁移
+3. **资源隔离**：策略线程独占特定核心
+
+#### 绑核建议
+
+- **高频策略**：建议绑定到物理核心（偶数核心）
+- **低频策略**：可以不绑核或绑定到逻辑核心
+- **多策略**：根据优先级分配核心资源
+- **混合场景**：为其他系统进程预留核心
+
+### 注意事项
+
+1. **策略 ID**：必须全局唯一，用于标识和管理策略实例
+2. **策略模块**：必须是已注册的策略类名，区分大小写
+3. **账户关联**：`account_id` 必须与交易配置中的账户 ID 匹配
+4. **线程池大小**：`thread_count` 应根据 CPU 核心数和策略复杂度调整
+5. **CPU 绑核**：生产环境建议绑核以提升性能，开发环境可不绑核
+6. **配置更新**：修改配置后需要重启系统或通过 API 动态加载
+
+---
+
+## 配置验证
+
+系统在启动时会验证所有配置的完整性和正确性：
+
+- **必填项检查**：确保所有必填配置项已设置
+- **类型检查**：验证配置值类型是否正确
+- **范围检查**：验证数值是否在有效范围内
+- **依赖检查**：验证配置项之间的依赖关系
+- **文件检查**：验证文件路径是否存在
+
+如果配置验证失败，系统会输出详细的错误信息并拒绝启动。
+
+## 配置最佳实践
+
+1. **使用版本控制**：将配置文件纳入版本管理（密码除外）
+2. **环境分离**：为开发、测试、生产环境准备不同的配置文件
+3. **密码管理**：不要在配置文件中硬编码密码，使用环境变量或密钥管理服务或者保证生产环境跟外网隔离，控制访问权限
+4. **配置备份**：定期备份配置文件
+5. **文档更新**：修改配置时同步更新文档
+6. **渐进式修改**：一次只修改一个配置项，观察效果后再继续
+7. **配置审计**：记录配置变更历史和变更原因
+
+## 故障排查
+
+### 常见配置错误
+
+1. **文件路径错误**
+   - 检查路径是否使用绝对路径或正确的相对路径
+   - 确认文件是否存在且有读取权限
+
+2. **JSON 格式错误**
+   - 使用 JSON 验证工具检查语法
+   - 注意逗号、引号、括号的正确使用
+
+3. **账户配置错误**
+   - 确认账户 ID 是否正确
+   - 检查是否至少配置了一个证券账号
+
+4. **策略无法启动**
+   - 检查策略模块名是否正确
+   - 确认策略配置项是否完整
+   - 查看日志获取详细错误信息
+
+### 调试技巧
+
+1. **启用详细日志**：设置 `LOG_LEVEL=debug`
+2. **逐步启用**：先启用一个解析器/策略，确认正常后再启用其他
+3. **使用 Mock 模式**：先在 Mock 模式下测试配置
+4. **检查性能统计**：启用性能统计以监控系统状态
+
+---
+
+## 附录
+
+### 支持的市场类型
+
+| 值 | 说明 |
+|----|------|
+| `sse` | 上海证券交易所 |
+| `szse` | 深圳证券交易所 |
+
+### 支持的数据类型
+
+| 值 | 说明 |
+|----|------|
+| `index` | 指数行情 |
+| `depth` | 十档行情 |
+| `entrust` | 委托队列 |
+| `trade` | 逐笔成交 |
+| `depth_fifty` | 五十档行情 |
+
+### 登录模式说明
+
+| 值 | 说明 | 使用场景 |
+|----|------|---------|
+| `1` | 客户号（cust_id） | 大多数券商支持 |
+| `2` | 资金账号（fund_account_id） | 部分券商要求 |
+
+### 数据输出类型
+
+| 类型 | 说明 | 适用场景 |
+|------|------|---------|
+| `shared_memory` | 共享内存 | 高性能进程间通信 |
+| `file` | 文件 | 数据持久化和回放 |
+| `udp` | UDP 广播 | 多进程数据分发 |

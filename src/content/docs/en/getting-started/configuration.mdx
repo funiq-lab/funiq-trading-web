@@ -1,0 +1,695 @@
+---
+title: Configuration
+hide_breadcrumbs: false
+---
+
+The configuration for the Funiq Trading system, including environment variables, system configuration, quote configuration, trade configuration, and strategy configuration.
+
+## Table of contents
+
+- [Environment variables](#environment-variables)
+- [System configuration](#system-configuration)
+- [Quote configuration](#quote-configuration)
+- [Trade configuration](#trade-configuration)
+- [Strategy configuration](#strategy-configuration)
+
+---
+
+## Environment variables
+
+Environment variables are usually defined in a `.env` file which the system loads at startup.
+
+### Service configuration
+
+| Variable | Type | Description | Default | Example |
+|---------|------|-------------|--------|--------|
+| `QUOTE_CONFIG_FILE` | string | Path to quote configuration file | - | `./quote_config.json` |
+| `TRADE_CONFIG_FILE` | string | Path to trade configuration file | - | `./trade_config.json` |
+| `STRATEGY_CONFIG_FILE` | string | Path to strategy configuration file | - | `./strategy_config.json` |
+| `SYSTEM_CONFIG_FILE` | string | Path to system configuration file | - | `./system_config.json` |
+| `FT_DB_PATH` | string | Path to the database file | - | `data/trading.db` |
+| `FT_DB_MIGRATION_CONFIG_PATH` | string | Path to DB migration config | - | `migrations/migration.config.ini` |
+
+### Network configuration
+
+| Variable | Type | Description | Default | Example |
+|---------|------|-------------|--------|--------|
+| `HTTP_SERVER_ADDRESS` | string | HTTP server listen address | `0.0.0.0` | `0.0.0.0` |
+| `HTTP_SERVER_PORT` | integer | HTTP server listen port | `8080` | `8080` |
+| `HTTP_SERVER_THREADS` | integer | Number of worker threads for HTTP server | `4` | `4` |
+
+### Logging configuration
+
+| Variable | Type | Description | Default | Example |
+|---------|------|-------------|--------|--------|
+| `LOG_ENABLED` | boolean | Enable logging | `true` | `true` |
+| `LOG_LEVEL` | string | Log level | `debug` | `debug`, `info`, `warn`, `error` |
+| `LOG_CONSOLE` | boolean | Output logs to console | `true` | `true` |
+| `LOG_FILE_ENABLED` | boolean | Write logs to files | `true` | `true` |
+| `LOG_ASYNC` | boolean | Use asynchronous logging | `true` | `true` |
+| `LOG_FILE_DIR` | string | Log directory | `logs` | `logs` |
+| `LOG_MAX_FILES` | integer | Max number of log files to keep | `30` | `30` |
+| `LOG_FLUSH_LEVEL` | string | Flush log level | `debug` | `debug`, `info`, `warn`, `error` |
+
+### Example .env
+
+```bash
+# Service configuration
+QUOTE_CONFIG_FILE=./quote_config.json
+TRADE_CONFIG_FILE=./trade_config.json
+STRATEGY_CONFIG_FILE=./strategy_config.json
+SYSTEM_CONFIG_FILE=./system_config.json
+FT_DB_PATH=data/trading.db
+FT_DB_MIGRATION_CONFIG_PATH=migrations/migration.config.ini
+
+# Network configuration
+HTTP_SERVER_ADDRESS=0.0.0.0
+HTTP_SERVER_PORT=8080
+HTTP_SERVER_THREADS=4
+
+# Logger configuration
+LOG_ENABLED=true
+LOG_LEVEL=debug
+LOG_CONSOLE=true
+LOG_FILE_ENABLED=true
+LOG_ASYNC=true
+LOG_FILE_DIR=logs
+LOG_MAX_FILES=30
+LOG_FLUSH_LEVEL=debug
+```
+
+---
+
+## System configuration
+
+The system configuration file is used to define trading time rules, holidays, trading days and other global parameters.
+
+### File structure
+
+```json
+{
+	"trading_time": [[startHour, startMinute, endHour, endMinute], ...],
+	"holiday": ["YYYY-MM-DD", ...],
+	"trading_weekdays": [1,2,3,4,5]
+}
+```
+
+### Fields
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `trading_time` | array | No | Array of trading time intervals. Each item is `[startHour, startMinute, endHour, endMinute]`. If omitted, the system defaults to 24/7 mode. |
+| `holiday` | array | No | Array of holiday dates in `YYYY-MM-DD`. If omitted, holidays are ignored. |
+| `trading_weekdays` | array | No | Trading weekdays, 1-7 represent Mon-Sun. Defaults to full week `[1,2,3,4,5,6,7]`. |
+
+### Run modes
+
+The system decides its run mode based on configuration:
+
+#### 24/7 mode (default)
+- Condition: `trading_time` not configured
+- Behavior: system runs continuously
+
+#### Trading time intervals
+- Condition: `trading_time` configured
+- Behavior: system runs only during specified intervals
+
+#### Holiday control
+- Condition: `holiday` configured
+- Behavior: system does not run on configured holidays
+
+### Examples
+
+#### Example 1 — China A-share trading hours
+
+```json
+{
+	"trading_time": [
+		[9, 30, 11, 30],
+		[13, 0, 15, 0]
+	],
+	"holiday": [
+		"2024-01-01",
+		"2024-02-10",
+		"2024-02-11",
+		"2024-02-12"
+	],
+	"trading_weekdays": [1,2,3,4,5]
+}
+```
+
+#### Example 2 — 24/7 (crypto)
+
+```json
+{
+	"holiday": [],
+	"trading_weekdays": [1,2,3,4,5,6,7]
+}
+```
+
+#### Example 3 — US market
+
+```json
+{
+	"trading_time": [
+		[21,30,23,59],
+		[0,0,4,0]
+	],
+	"holiday": ["2024-12-25", "2024-07-04"],
+	"trading_weekdays": [1,2,3,4,5]
+}
+```
+
+### Notes
+
+1. Time format is 24-hour (hour: 0-23, minute: 0-59)
+2. Date format: `YYYY-MM-DD`
+3. For intervals spanning midnight, split into multiple intervals
+4. All times use the system local timezone
+
+---
+
+## Quote configuration
+
+Quote configuration defines data sources, subscription rules, performance settings and mock modes.
+
+### File structure
+
+```json
+{
+	"parsers": [
+		{
+			"id": "parser_id",
+			"active": true,
+			"module": "module_name",
+			"config": { /* parser config */ },
+			"data": [ /* output config */ ]
+		}
+	]
+}
+```
+
+### Parser fields
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | string | Yes | Unique parser identifier |
+| `active` | boolean | Yes | Enable the parser |
+| `module` | string | Yes | Parser module name (dynamic library) |
+| `config` | object | Yes | Parser-specific configuration |
+| `data` | array | No | Data output configuration |
+
+### Parser config (config)
+
+#### Basic config
+
+| Field | Type | Required | Default | Description |
+|------|------|----------|--------|-------------|
+| `callback_mode` | boolean | No | `false` | Use callback push mode |
+| `extended_config_file` | string | No | - | Extended config path (parser-specific) |
+
+#### Subscription (subscription)
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `markets` | array | No | Market list, e.g., `"sse"`, `"szse"` |
+| `data_types` | array | No | Types: `index`, `depth`, `entrust`, `trade`, `depth_fifty` |
+| `securities` | array | No | List of symbols (strings or objects) |
+
+#### Performance settings
+
+| Field | Type | Required | Default | Description |
+|------|------|----------|--------|-------------|
+| `enabled` | boolean | No | `false` | Enable performance stats |
+| `report_interval_ms` | integer | No | `5000` | Report interval in ms |
+| `enable_latency_stats` | boolean | No | `false` | Enable latency stats |
+| `enable_throughput_stats` | boolean | No | `false` | Enable throughput stats |
+
+#### Mock settings
+
+| Field | Type | Required | Default | Description |
+|------|------|----------|--------|-------------|
+| `enabled` | boolean | No | `false` | Enable mock mode |
+| `mock_data_file` | string | No | - | Path to mock data (binary) |
+| `loop_replay` | boolean | No | `true` | Loop replay data |
+| `csv_mode` | boolean | No | `false` | Use CSV mode |
+| `csv_files` | object | No | - | CSV file paths |
+
+##### CSV files structure
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `depth` | string | No | 10-level depth CSV path |
+| `index` | string | No | Index CSV path |
+| `entrust` | string | No | Entrust queue CSV path |
+| `trade` | string | No | Tick/trade CSV path |
+| `depth_fifty` | string | No | 50-level depth CSV path |
+
+### Data output (data)
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `type` | string | Yes | Output type: `shared_memory`, `file`, `udp` |
+| `active` | boolean | Yes | Enable output |
+| `config` | object | No | Output-specific config |
+
+#### Shared memory output example
+
+```json
+{
+	"type": "shared_memory",
+	"active": true,
+	"config": { "name": "quote_shm_mock" }
+}
+```
+
+#### File output example
+
+```json
+{
+	"type": "file",
+	"active": true,
+	"config": { "path": "./test/data/sample_market_data", "format": "binary" }
+}
+```
+
+### Full example — production
+
+```json
+{
+	"parsers": [
+		{
+			"id": "quote_parser_prod",
+			"active": true,
+			"module": "ft_ksqmd_quote_parser",
+			"config": {
+				"callback_mode": true,
+				"markets": ["sse", "szse"],
+				"data_types": ["index", "depth", "entrust", "trade", "depth_fifty"],
+				"extended_config_file": "./api_config_ex.xml",
+				"performance": {
+					"enabled": true,
+					"report_interval_ms": 5000,
+					"enable_latency_stats": true,
+					"enable_throughput_stats": true
+				}
+			}
+		}
+	]
+}
+```
+
+### Full example — mock test
+
+```json
+{
+	"parsers": [
+		{
+			"id": "mock_parser_test",
+			"active": true,
+			"module": "ft_ksqmd_quote_parser",
+			"config": {
+				"callback_mode": true,
+				"extended_config_file": "./api_config_ex.xml",
+				"performance": { "enabled": false, "report_interval_ms": 5000, "enable_latency_stats": true, "enable_throughput_stats": true },
+				"mock": {
+					"enabled": true,
+					"mock_data_file": "./test/data/sample_market_data",
+					"loop_replay": true,
+					"csv_mode": true,
+					"csv_files": {
+						"depth": "mock_data_samples/depth_data.csv",
+						"index": "mock_data_samples/index_data.csv",
+						"entrust": "mock_data_samples/entrust_data.csv",
+						"trade": "mock_data_samples/trade_data.csv",
+						"depth_fifty": "mock_data_samples/depth_fifty_data.csv"
+					}
+				}
+			},
+			"data": [
+				{ "type": "shared_memory", "active": false, "config": { "name": "quote_shm_mock" } }
+			]
+		}
+	]
+}
+```
+
+### Notes
+
+1. Callback mode: recommended for trading scenarios to achieve lower latency (`callback_mode: true`).
+2. Mock mode: for development/testing only; do not use for production trading.
+
+---
+
+## Trade configuration
+
+Trade configuration defines trading handlers, account information, login modes and performance settings.
+
+### File structure
+
+```json
+{
+	"parsers": [
+		{
+			"id": "handler_id",
+			"active": true,
+			"module": "module_name",
+			"config": { /* handler config */ },
+			"data": [ /* output config */ ]
+		}
+	]
+}
+```
+
+### Handler fields
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | string | Yes | Unique handler id |
+| `active` | boolean | Yes | Enable the handler |
+| `module` | string | Yes | Handler module name (dynamic library) |
+| `config` | object | Yes | Handler-specific config |
+| `data` | array | No | Output configuration |
+
+### Handler config
+
+#### Basic config
+
+| Field | Type | Required | Default | Description |
+|------|------|----------|--------|-------------|
+| `callback_mode` | boolean | No | `true` | Use callback mode for trade reports |
+| `extended_config_file` | string | No | - | Extended config path |
+| `login_mode` | integer | No | `1` | Login mode: `1`=cust_id, `2`=fund_account_id |
+
+#### Accounts
+
+Accounts is an array of account objects with the following fields:
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `login_id` | string | Yes | Login username |
+| `cust_id` | string | Yes | Customer id |
+| `fund_account_id` | string | Yes | Fund account id |
+| `account_id_sh` | string | Conditional | Shanghai account id (either SH or SZ required) |
+| `account_id_sz` | string | Conditional | Shenzhen account id (either SH or SZ required) |
+| `branch_id` | string | Yes | Branch code |
+| `password` | string | Yes | Trading password |
+
+#### Performance settings
+
+| Field | Type | Required | Default | Description |
+|------|------|----------|--------|-------------|
+| `enabled` | boolean | No | `false` | Enable performance stats |
+| `report_interval_ms` | integer | No | `1000` | Report interval in ms |
+| `enable_latency_stats` | boolean | No | `false` | Enable latency stats |
+
+### Data output
+
+Same as quote outputs: `shared_memory`, `file`, `udp`.
+
+### Examples
+
+#### Single-account
+
+```json
+{
+	"parsers": [
+		{
+			"id": "trade_prod",
+			"active": true,
+			"module": "ft_atp_trade_handler",
+			"config": {
+				"callback_mode": true,
+				"extended_config_file": "./atp_quant_api.xml",
+				"login_mode": 2,
+				"accounts": [
+					{
+						"login_id": "10018100xxxx",
+						"cust_id": "10187xxxx",
+						"fund_account_id": "10018100xxxx",
+						"account_id_sz": "017510xxxx",
+						"account_id_sh": "A16372xxxx",
+						"branch_id": "xxxx",
+						"password": "12xxxx"
+					}
+				],
+				"performance": { "enabled": true, "report_interval_ms": 5000, "enable_latency_stats": true }
+			},
+			"data": [ { "type": "shared_memory", "active": false, "config": { "name": "trade_shm_prod" } } ]
+		}
+	]
+}
+```
+
+#### Multi-account
+
+```json
+{
+	"parsers": [
+		{
+			"id": "trade_multi",
+			"active": true,
+			"module": "ft_atp_trade_handler",
+			"config": {
+				"callback_mode": true,
+				"extended_config_file": "./atp_quant_api.xml",
+				"login_mode": 1,
+				"accounts": [ /* multiple account objects */ ],
+				"performance": { "enabled": true, "report_interval_ms": 5000, "enable_latency_stats": true }
+			}
+		}
+	]
+}
+```
+
+### Notes
+
+1. Choose `login_mode` according to broker requirements (`1` = cust_id, `2` = fund account id).
+2. Account validation: at least an SH or SZ securities account must be configured.
+3. Password security: do not hard-code passwords; restrict access in production.
+4. Callback mode: trade system strongly recommends `callback_mode: true` to receive real-time reports.
+5. Performance monitoring: enable performance stats to monitor trade latency.
+
+---
+
+## Strategy configuration
+
+Strategy configuration defines strategy instances, parameters, thread pool and CPU affinity.
+
+### File structure
+
+```json
+{
+	"strategies": [ /* strategy instances */ ],
+	"cores": [ /* CPU core list */ ],
+	"thread_count": 100
+}
+```
+
+### Global fields
+
+| Field | Type | Required | Default | Description |
+|------|------|----------|--------|-------------|
+| `strategies` | array | Yes | - | Strategy instances array |
+| `cores` | array | No | `[]` | CPU affinity list; empty means no affinity |
+| `thread_count` | integer | No | hardware concurrency | Size of the strategy thread pool |
+
+### Strategy instance
+
+Each strategy instance includes:
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | string | Yes | Unique strategy id |
+| `name` | string | No | Strategy name (display) |
+| `description` | string | No | Description |
+| `module` | string | Yes | Strategy module/class name |
+| `config` | object | Yes | Strategy-specific config |
+
+#### Common strategy config fields
+
+| Field | Type | Description |
+|------|------|-------------|
+| `account_id` | string | Associated trading account id |
+| `enable_performance_logging` | boolean | Enable performance logs |
+| `performance_sample_count` | integer | Samples for performance measurement |
+
+#### StopProfitLossStrategy example
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `monitor_stocks` | array | Yes | List of stock codes to monitor |
+| `profit_threshold` | number | Yes | Profit threshold (%) |
+| `loss_threshold` | number | Yes | Loss threshold (%) |
+| `order_timeout_seconds` | integer | No | Order timeout in seconds |
+| `order_quantity` | integer | Yes | Quantity per order |
+| `account_id` | string | Yes | Associated account id |
+
+### Full examples
+
+#### Single strategy
+
+```json
+{
+	"strategies": [
+		{
+			"id": "stop_profit_loss_001",
+			"name": "Stop Profit Loss",
+			"description": "A stop-profit/stop-loss strategy",
+			"module": "StopProfitLossStrategy",
+			"config": {
+				"monitor_stocks": ["000001","000002","600000","600036"],
+				"profit_threshold": 1.0,
+				"loss_threshold": 0.5,
+				"order_timeout_seconds": 10,
+				"order_quantity": 100,
+				"account_id": "101871021",
+				"enable_performance_logging": true,
+				"performance_sample_count": 5
+			}
+		}
+	],
+	"cores": [0,2,4,6,8],
+	"thread_count": 100
+}
+```
+
+#### Multi-strategy
+
+```json
+{
+	"strategies": [ /* multiple strategy configs */ ],
+	"cores": [0,2,4,6,8],
+	"thread_count": 100
+}
+```
+
+#### No CPU affinity
+
+```json
+{
+	"strategies": [ { "id": "strategy_001", "module": "TestStrategy", "config": { "account_id": "101871021" } } ],
+	"cores": [],
+	"thread_count": 50
+}
+```
+
+### CPU affinity (`cores`)
+
+`cores` defines the CPU cores for binding strategy threads:
+
+- Empty array `[]`: no affinity, OS schedules threads
+- Specific cores: e.g. `[0,2,4,6,8]` — threads are bound to these cores in round-robin
+
+Binding strategy (round-robin):
+
+```
+thread 0 -> cores[0]
+thread 1 -> cores[1]
+thread 2 -> cores[2]
+...
+thread N -> cores[N % cores.length]
+```
+
+### Benefits of affinity
+
+1. Lower latency by reducing cache invalidation and context switches
+2. Improved performance by avoiding cross-core migration
+3. Resource isolation: dedicate cores for strategy threads
+
+### Affinity recommendations
+
+- For high-frequency strategies: bind to physical cores (even-numbered cores)
+- For low-frequency strategies: no affinity or bind to logical cores
+- For multi-strategy setups: allocate cores by priority
+- Reserve cores for other system processes in mixed scenarios
+
+### Notes
+
+1. Strategy `id` must be globally unique
+2. Strategy `module` must be a registered strategy class name (case-sensitive)
+3. `account_id` must match an account defined in the trade configuration
+4. Adjust `thread_count` based on CPU cores and strategy complexity
+5. Production: prefer CPU affinity; development: affinity optional
+6. After changing configuration, restart the system or load dynamically via API
+
+---
+
+## Configuration validation
+
+At startup, the system validates configuration completeness and correctness:
+
+- Required field checks
+- Type checks
+- Value range checks
+- Dependency checks between fields
+- File path existence checks
+
+If validation fails, the system prints detailed errors and refuses to start.
+
+## Best practices
+
+1. Use version control for configuration files (exclude secrets)
+2. Separate configs for dev/test/prod environments
+3. Do not hard-code passwords; use environment variables or secret management
+4. Regularly back up configuration files
+5. Update documentation when configs change
+6. Make changes incrementally and observe behavior
+7. Keep an audit trail of configuration changes
+
+## Troubleshooting
+
+### Common mistakes
+
+1. File path errors
+	- Check absolute/relative paths and permissions
+2. JSON syntax errors
+	- Validate JSON (commas, quotes, braces)
+3. Account config errors
+	- Ensure account IDs are correct and at least one securities account (SH or SZ) is set
+4. Strategy fails to start
+	- Check strategy module name and completeness of config
+	- Inspect logs for detailed errors
+
+### Debug tips
+
+1. Enable verbose logs: `LOG_LEVEL=debug`
+2. Enable components incrementally to isolate issues
+3. Use mock mode for testing
+4. Enable performance stats to monitor system behavior
+
+---
+
+## Appendix
+
+### Supported markets
+
+| Value | Description |
+|------|-------------|
+| `sse` | Shanghai Stock Exchange |
+| `szse` | Shenzhen Stock Exchange |
+
+### Supported data types
+
+| Value | Description |
+|------|-------------|
+| `index` | Index data |
+| `depth` | 10-level depth |
+| `entrust` | Order queue |
+| `trade` | Tick/trade data |
+| `depth_fifty` | 50-level depth |
+
+### Login modes
+
+| Value | Description | Typical use |
+|------:|------------:|-----------:|
+| `1` | cust_id | Most brokers |
+| `2` | fund_account_id | Some brokers require this |
+
+### Output types
+
+| Type | Description | Use case |
+|------|-------------|---------|
+| `shared_memory` | Shared memory IPC | High-performance inter-process communication |
+| `file` | File output | Data persistence and replay |
+| `udp` | UDP broadcast | Multi-process data distribution |

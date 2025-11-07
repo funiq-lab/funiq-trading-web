@@ -2,3 +2,118 @@
 title: Introduction
 hide_breadcrumbs: false
 ---
+
+## System Introduction
+
+Funiq Trading is a professional quantitative trading system that provides a complete solution for market data ingestion, strategy execution, and trade management. The system follows a modular design and supports multiple market data sources and trading interfaces.
+
+> This program is currently an internal system. More comprehensive security features will be added in the future.
+
+### System Highlights
+
+- Flexible integration: supports multiple market data sources and trading interfaces with quick switching
+- Data replay: built-in historical data replay for strategy backtesting and validation
+- High-performance design: multi-threaded architecture and optimized data processing to ensure low latency
+- Easy to use: provides HTTP API and C API, supports multiple programming languages
+
+
+## Features
+
+### ✅ Supported Features
+
+#### 📡 Market Data
+
+- Multiple integration methods
+	- Plugin architecture to flexibly switch data sources
+	- Three data receiving modes: shared memory (experimental), polling, and callback
+  
+- Multiple data origins
+	- Local test data (mock)
+	- Recorded historical data
+	- CSV file import
+	- Live market feed
+  
+- Data recording & replay
+	- Support for recording market data
+	- A complete historical data replay system for strategy testing and validation
+
+#### 💹 Trading
+
+- Plugin trading interfaces
+	- Flexible trading interface mechanism
+	- Support for multiple trading channels
+  
+- TWAP algorithm
+	- Time-weighted average price order slicing
+	- Support for task creation, status query and cancellation
+
+#### 🎯 Strategy Management
+
+- Plugin-based strategy integration
+	- Strategies are deployed and managed independently
+	- Support for concurrent multi-strategy execution
+
+#### 🔧 System Services
+
+- Network interfaces
+	- Full HTTP API service
+	- Support for market data queries, order placement, strategy control, etc.
+  
+- Data management
+	- Built-in embedded database
+	- Database versioning and migration system
+  
+- Logging
+	- Tiered logging
+	- File output and real-time viewing support
+  
+- Performance optimizations
+	- Multi-threaded architecture
+	- CPU core affinity management
+	- Support for high-concurrency scenarios
+
+- Scheduled control
+	- Built-in timed start/stop capabilities
+	- Support for external scheduled scripts
+
+### 🚧 Planned Features
+
+The following features are in development or planned:
+
+| Feature | Description | Status |
+|--------:|------------|:------:|
+| High-concurrency optimizations | Lock-free data structures, thread-pool improvements | In development |
+| DB-based replay | Support replaying from databases | Planned |
+| Data export | Export recorded data to CSV | Planned |
+| Risk control module | Built-in risk management | Planned |
+| Shared memory mode | High-performance IPC optimizations | Testing |
+
+
+## Quick Start
+
+### Configuration
+
+Before starting the system, complete the following configuration:
+
+**Configuration files**
+- Configure the required files: `env`, `system_config.json`, `quote_config.json`, `trade_config.json`, `strategy_config.json`
+- If you plan to run replays, prepare the replay files; otherwise the local mock data source will be used
+- Provide any third-party API credential files required by external providers
+
+### Start the system
+
+After configuration is complete, run the executable:
+
+```bash
+# Run the system
+./funiq-trading
+```
+
+Once the system starts you can operate and query it via the HTTP API.
+
+## Related Docs
+
+- [System Architecture](/getting-started/architecture)
+- [Configuration](/getting-started/configuration)
+- [Types](/getting-started/types)
+- [C](/getting-started/c)

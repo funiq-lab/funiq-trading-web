@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import mermaid from 'astro-mermaid';
 import rehypeExternalLinks from "rehype-external-links";
 import tailwind from "@astrojs/tailwind";
 import react from "@astrojs/react";
@@ -33,9 +34,18 @@ export default defineConfig({
     locales: SUPPORTED_LOCALES,
     defaultLocale: DEFAULT_LOCALE,
   },
-  integrations: [react(), tailwind({
-    applyBaseStyles: false,
-  }), mdx({
-    gfm: true,
-  }), sitemap()],
+  integrations: [
+    react(),
+    tailwind({
+      applyBaseStyles: false,
+    }),
+    mdx({
+      gfm: true,
+    }),
+    sitemap(),
+    mermaid({
+      theme: "base",
+      autoTheme: true,
+    }),
+  ],
 });

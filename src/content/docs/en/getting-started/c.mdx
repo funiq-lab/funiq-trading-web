@@ -1,0 +1,3048 @@
+---
+title: C Interface
+hide_breadcrumbs: false
+---
+
+Description of the C interface APIs, including quote (market data) interfaces, trade interfaces and strategy interfaces.
+
+## Contents
+
+- [Quote Interface](#quote-interface)
+- [Trade Interface](#trade-interface)
+- [Strategy Interface](#strategy-interface)
+
+---
+
+## Quote Interface
+
+The quote interface provides complete functionality for subscription, management and querying of market data. It supports index data, depth snapshots, per-order (entrust) data, per-trade data, and more.
+
+#### Contents
+
+- [Service lifecycle management](#service-lifecycle-management)
+- [Status query interfaces](#status-query-interfaces)
+- [Subscription management interfaces](#subscription-management-interfaces)
+- [Subscription status query interfaces](#subscription-status-query-interfaces)
+- [Callback management](#callback-management)
+- [Data retrieval interfaces](#data-retrieval-interfaces)
+
+---
+
+### Service lifecycle management
+
+#### quote_init
+
+Initialize the quote service (using the default configuration file).
+
+Function signature:
+```c
+int quote_init(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Initializes the quote service with the default configuration. Must be called before using other interfaces.
+
+---
+
+#### quote_start
+
+Start the quote service.
+
+Function signature:
+```c
+int quote_start(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Starts receiving and processing market data. Call after initialization.
+
+---
+
+#### quote_stop
+
+Stop the quote service.
+
+Function signature:
+```c
+int quote_stop(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Stops receiving and processing market data. The service can be restarted after stopping.
+
+---
+
+#### quote_release
+
+Release quote service resources.
+
+Function signature:
+```c
+void quote_release(void);
+```
+
+Notes:
+Frees all resources related to the quote service. Should be called before program exit. After calling, you must re-initialize to use the service again.
+
+---
+
+#### quote_get_parser
+
+Get the quote service parser/handler.
+
+Function signature:
+```c
+void* quote_get_parser(void);
+```
+
+Return values:
+- pointer to the quote parser
+- `NULL`: not initialized or failed
+
+Notes:
+Returns an internal parser pointer for advanced usage.
+
+---
+
+### Status query interfaces
+
+#### quote_is_running
+
+Check whether the quote service is running.
+
+Function signature:
+```c
+int quote_is_running(void);
+```
+
+Return values:
+- `1`: running
+- `0`: stopped
+
+---
+
+#### quote_is_connected
+
+Check whether connected to the quote server.
+
+Function signature:
+```c
+int quote_is_connected(void);
+```
+
+Return values:
+- `1`: connected
+- `0`: not connected
+
+---
+
+#### quote_get_status
+
+Get the current status of the quote service.
+
+Function signature:
+```c
+Status quote_get_status(void);
+```
+
+Return values:
+- A `Status` enum value representing the current status.
+
+---
+
+#### quote_get_last_error
+
+Get the last error message.
+
+Function signature:
+```c
+const char* quote_get_last_error(void);
+```
+
+Return values:
+- Error message string
+- Empty string: no error
+
+Notes:
+Returns the last operation's error message. The string is managed internally and does not need to be freed.
+
+---
+
+#### quote_get_parser_id
+
+Get the current parser ID.
+
+Function signature:
+```c
+const char* quote_get_parser_id(void);
+```
+
+Return values:
+- Parser ID string
+- `NULL`: not initialized
+
+Notes:
+Returns the identifier of the currently used quote parser.
+
+---
+
+### Subscription management interfaces
+
+#### quote_subscribe
+
+Replace the current subscription with a new subscription configuration.
+
+Function signature:
+```c
+int quote_subscribe(const SubscriptionConfig* config);
+```
+
+Parameters:
+- `config`: pointer to subscription configuration
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Completely replaces the current subscription with the provided configuration.
+
+---
+
+#### quote_unsubscribe
+
+Unsubscribe from all subscriptions.
+
+Function signature:
+```c
+int quote_unsubscribe(void);
+```
+
+---
+
+#### quote_add_markets
+
+Add markets to the subscription.
+
+Function signature:
+```c
+int quote_add_markets(MarketType* markets, int count);
+```
+
+Parameters:
+- `markets`: array of market types
+- `count`: number of markets
+
+Return values:
+- positive: actual number of markets added
+- negative: failure
+
+---
+
+#### quote_add_data_types
+
+Add data types to the subscription.
+
+Function signature:
+```c
+int quote_add_data_types(FTDataType* data_types, int count);
+```
+
+Parameters:
+- `data_types`: array of data types
+- `count`: number of data types
+
+Return values:
+- positive: actual number of data types added
+- negative: failure
+
+---
+
+#### quote_add_securities
+
+Add securities to the subscription.
+
+Function signature:
+```c
+int quote_add_securities(SecurityInfo* securities, int count);
+```
+
+Parameters:
+- `securities`: array of SecurityInfo
+- `count`: number of securities
+
+Return values:
+- positive: actual number of securities added
+- negative: failure
+
+---
+
+#### quote_remove_markets
+
+Remove markets from the subscription.
+
+Function signature:
+```c
+int quote_remove_markets(MarketType* markets, int count);
+```
+
+Parameters:
+- `markets`: array of market types
+- `count`: number of markets
+
+Return values:
+- positive: actual number of markets removed
+- negative: failure
+
+---
+
+#### quote_remove_data_types
+
+Remove data types from the subscription.
+
+Function signature:
+```c
+int quote_remove_data_types(FTDataType* data_types, int count);
+```
+
+Parameters:
+- `data_types`: array of data types
+- `count`: number of data types
+
+Return values:
+- positive: actual number of data types removed
+- negative: failure
+
+---
+
+#### quote_remove_securities
+
+Remove securities from the subscription.
+
+Function signature:
+```c
+int quote_remove_securities(SecurityInfo* securities, int count);
+```
+
+Parameters:
+- `securities`: array of SecurityInfo
+- `count`: number of securities
+
+Return values:
+- positive: actual number of securities removed
+- negative: failure
+
+---
+
+### Subscription status query interfaces
+
+#### quote_is_market_subscribed
+
+Check whether a market is subscribed.
+
+Function signature:
+```c
+int quote_is_market_subscribed(MarketType market);
+```
+
+Parameters:
+- `market`: market type
+
+Return values:
+- `1`: subscribed
+- `0`: not subscribed
+
+---
+
+#### quote_is_data_type_subscribed
+
+Check whether a data type is subscribed.
+
+Function signature:
+```c
+int quote_is_data_type_subscribed(FTDataType data_type);
+```
+
+Parameters:
+- `data_type`: data type
+
+Return values:
+- `1`: subscribed
+- `0`: not subscribed
+
+---
+
+#### quote_is_code_subscribed
+
+Check whether a security code is subscribed.
+
+Function signature:
+```c
+int quote_is_code_subscribed(const char* code);
+```
+
+Parameters:
+- `code`: security code
+
+Return values:
+- `1`: subscribed
+- `0`: not subscribed
+
+---
+
+#### quote_should_process_data
+
+Check whether data for the specified market/data type/code should be processed.
+
+Function signature:
+```c
+int quote_should_process_data(MarketType market, FTDataType data_type, const char* code);
+```
+
+Parameters:
+- `market`: market type
+- `data_type`: data type
+- `code`: security code
+
+Return values:
+- `1`: should process
+- `0`: should not process
+
+Notes:
+Performs a combined check of market, data type and security subscription status to determine whether the data should be processed.
+
+---
+
+### Callback management
+
+#### quote_set_index_data_callback
+
+Set callback for index data.
+
+Function signature:
+```c
+IndexDataCallbackHandle quote_set_index_data_callback(IndexDataCallbackType callback);
+```
+
+Parameters:
+- `callback`: callback function pointer
+
+Callback type:
+```c
+typedef void (*IndexDataCallbackType)(const IndexData* data);
+```
+
+---
+
+#### quote_remove_index_data_callback
+
+Remove the index data callback.
+
+Function signature:
+```c
+int quote_remove_index_data_callback(IndexDataCallbackHandle handle);
+```
+
+Parameters:
+- `handle`: callback handle
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### quote_set_depth_data_callback
+
+Set callback for depth (snapshot) data.
+
+Function signature:
+```c
+DepthDataCallbackHandle quote_set_depth_data_callback(DepthDataCallbackType callback);
+```
+
+Parameters:
+- `callback`: callback function pointer
+
+Callback type:
+```c
+typedef void (*DepthDataCallbackType)(const DepthData* data);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### quote_remove_depth_data_callback
+
+Remove depth data callback.
+
+Function signature:
+```c
+int quote_remove_depth_data_callback(DepthDataCallbackHandle handle);
+```
+
+Parameters:
+- `handle`: callback handle
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### quote_set_depth_fifty_data_callback
+
+Set callback for depth-50 data.
+
+Function signature:
+```c
+DepthFiftyDataCallbackHandle quote_set_depth_fifty_data_callback(DepthFiftyDataCallbackType callback);
+```
+
+Parameters:
+- `callback`: callback function pointer
+
+Callback type:
+```c
+typedef void (*DepthFiftyDataCallbackType)(const DepthFiftyData* data);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### quote_remove_depth_fifty_data_callback
+
+Remove depth-50 callback.
+
+Function signature:
+```c
+int quote_remove_depth_fifty_data_callback(DepthFiftyDataCallbackHandle handle);
+```
+
+---
+
+#### quote_set_entrust_data_callback
+
+Set callback for entrust (per-order) data.
+
+Function signature:
+```c
+EntrustDataCallbackHandle quote_set_entrust_data_callback(EntrustDataCallbackType callback);
+```
+
+Parameters:
+- `callback`: callback function pointer
+
+Callback type:
+```c
+typedef void (*EntrustDataCallbackType)(const EntrustData* data);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### quote_remove_entrust_data_callback
+
+Remove entrust data callback.
+
+Function signature:
+```c
+int quote_remove_entrust_data_callback(EntrustDataCallbackHandle handle);
+```
+
+---
+
+#### quote_set_trade_data_callback
+
+Set callback for trade (per-trade) data.
+
+Function signature:
+```c
+TradeDataCallbackHandle quote_set_trade_data_callback(TradeDataCallbackType callback);
+```
+
+Parameters:
+- `callback`: callback function pointer
+
+Callback type:
+```c
+typedef void (*TradeDataCallbackType)(const TradeData* data);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### quote_remove_trade_data_callback
+
+Remove trade data callback.
+
+Function signature:
+```c
+int quote_remove_trade_data_callback(TradeDataCallbackHandle handle);
+```
+
+---
+
+#### quote_set_status_callback
+
+Set a callback for status changes.
+
+Function signature:
+```c
+StatusCallbackHandle quote_set_status_callback(QuoteStatusCallbackType callback);
+```
+
+Parameters:
+- `callback`: callback function pointer
+
+Callback type:
+```c
+typedef void (*QuoteStatusCallbackType)(Status status, const char* message);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### quote_remove_status_callback
+
+Remove status-change callback.
+
+Function signature:
+```c
+int quote_remove_status_callback(StatusCallbackHandle handle);
+```
+
+---
+
+### Data retrieval interfaces
+
+These interfaces are intended for polling.
+
+#### quote_get_index_data
+
+Retrieve the latest index data.
+
+Function signature:
+```c
+int quote_get_index_data(IndexData* data);
+```
+
+Parameters:
+- `data`: output data pointer
+
+Return values:
+- `1`: data retrieved successfully
+- `0`: no data
+- `-1`: failure
+
+Notes:
+Gets the latest index data from the queue. This call is non-blocking.
+
+---
+
+#### quote_get_depth_data
+
+Retrieve the latest depth snapshot.
+
+Function signature:
+```c
+int quote_get_depth_data(DepthData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_depth_fifty_data
+
+Retrieve the latest depth-50 data.
+
+Function signature:
+```c
+int quote_get_depth_fifty_data(DepthFiftyData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_entrust_data
+
+Retrieve the latest entrust (per-order) data.
+
+Function signature:
+```c
+int quote_get_entrust_data(EntrustData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_trade_data
+
+Retrieve the latest trade data.
+
+Function signature:
+```c
+int quote_get_trade_data(TradeData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+## Data retrieval by security code
+
+#### quote_get_index_data_by_code
+
+Get the latest index data for a specific security code.
+
+Function signature:
+```c
+int quote_get_index_data_by_code(const char* code, IndexData* data);
+```
+
+Parameters:
+- `code`: security code
+- `data`: output data pointer
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_depth_data_by_code
+
+Get the latest depth snapshot for a specific security code.
+
+Function signature:
+```c
+int quote_get_depth_data_by_code(const char* code, DepthData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_depth_fifty_data_by_code
+
+Get the latest depth-50 data for a specific security code.
+
+Function signature:
+```c
+int quote_get_depth_fifty_data_by_code(const char* code, DepthFiftyData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_entrust_data_by_code
+
+Get the latest entrust data for a specific security code.
+
+Function signature:
+```c
+int quote_get_entrust_data_by_code(const char* code, EntrustData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### quote_get_trade_data_by_code
+
+Get the latest trade data for a specific security code.
+
+Function signature:
+```c
+int quote_get_trade_data_by_code(const char* code, TradeData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+## Trade Interface
+
+The trade interface provides full trading functionality: placing orders, cancelling orders, querying positions, funds, orders, trades, and supports multi-account management, bank-securities transfers and fund transfers.
+
+#### Contents
+
+- [Service lifecycle management](#service-lifecycle-management-1)
+- [Connection and login management](#connection-and-login-management)
+- [Status query interfaces](#status-query-interfaces-1)
+- [Multi-account management interfaces](#multi-account-management-interfaces)
+- [Trading operation interfaces](#trading-operation-interfaces)
+- [Query interfaces](#query-interfaces)
+- [Callback management](#callback-management-1)
+- [Data retrieval (polling) interfaces](#data-retrieval-polling-interfaces)
+- [Utility interfaces](#utility-interfaces)
+
+---
+
+### Service lifecycle management
+
+#### trade_init
+
+Initialize the trade service (using the default configuration file).
+
+Function signature:
+```c
+int trade_init(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Must be called before using other trade interfaces.
+
+---
+
+#### trade_init_with_config
+
+Initialize the trade service with a specified configuration file.
+
+Function signature:
+```c
+int trade_init_with_config(const char* config_file);
+```
+
+Parameters:
+- `config_file`: configuration file path
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+The configuration file contains trade server address, ports, account info, etc.
+
+---
+
+#### trade_start
+
+Start the trade service.
+
+Function signature:
+```c
+int trade_start(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Start the trade service to begin receiving and processing trade data. Must be called after initialization.
+
+---
+
+#### trade_stop
+
+Stop the trade service.
+
+Function signature:
+```c
+int trade_stop(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Stops the trade service. It can be restarted afterward.
+
+---
+
+#### trade_release
+
+Release trade service resources.
+
+Function signature:
+```c
+void trade_release(void);
+```
+
+Notes:
+Frees all resources used by the trade service. Should be called before program exit. Re-initialization is required after calling.
+
+---
+
+#### trade_get_handler
+
+Get the trade service handler.
+
+Function signature:
+```c
+void* trade_get_handler(void);
+```
+
+Return values:
+- Pointer to the trade service handler
+
+Notes:
+Provides a pointer to the internal trade service handler for advanced usage.
+
+---
+
+### Connection and login management
+
+#### trade_connect
+
+Connect to the trading system.
+
+Function signature:
+```c
+int trade_connect(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Call after starting the service to connect to the trade server.
+
+---
+
+#### trade_disconnect
+
+Disconnect from the trading system.
+
+Function signature:
+```c
+int trade_disconnect(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Disconnects from the trade server.
+
+---
+
+### Status query interfaces
+
+#### trade_is_running
+
+Check whether the trade service is running.
+
+Function signature:
+```c
+int trade_is_running(void);
+```
+
+Return values:
+- `1`: running
+- `0`: stopped
+
+---
+
+#### trade_is_connected
+
+Check whether the trade service is connected.
+
+Function signature:
+```c
+int trade_is_connected(void);
+```
+
+Return values:
+- `1`: connected
+- `0`: not connected
+
+---
+
+#### trade_is_account_login
+
+Check whether the specified account is logged in.
+
+Function signature:
+```c
+int trade_is_account_login(const char* login_id);
+```
+
+Parameters:
+- `login_id`: login account id
+
+Return values:
+- `1`: logged in
+- `0`: not logged in
+
+Notes:
+Thread-safe; queries login status for a specific account.
+
+---
+
+#### trade_get_logged_in_login_ids
+
+Get a list of all logged-in account IDs.
+
+Function signature:
+```c
+int trade_get_logged_in_login_ids(char*** account_ids, int* count);
+```
+
+Parameters:
+- `account_ids`: output array of login IDs (caller must free memory)
+- `count`: number of accounts
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Thread-safe. Caller should free memory using `trade_free_account_ids`.
+
+---
+
+#### trade_get_logged_in_account_count
+
+Get the count of logged-in accounts.
+
+Function signature:
+```c
+int trade_get_logged_in_account_count(void);
+```
+
+Return values:
+- number of logged-in accounts
+- negative: error
+
+Notes:
+Thread-safe.
+
+---
+
+#### trade_get_status
+
+Get current status.
+
+Function signature:
+```c
+Status trade_get_status(void);
+```
+
+Return values:
+- Status enum value
+
+---
+
+#### trade_get_last_error
+
+Get last error message.
+
+Function signature:
+```c
+const char* trade_get_last_error(void);
+```
+
+Return values:
+- Error message string
+
+---
+
+#### trade_get_interface_id
+
+Get the current trade interface ID.
+
+Function signature:
+```c
+const char* trade_get_interface_id(void);
+```
+
+Return values:
+- Interface ID string
+- `NULL`: not initialized
+
+Notes:
+Returns the unique identifier for the trade interface.
+
+---
+
+### Multi-account management interfaces
+
+#### trade_get_account_info_by_id
+
+Get account information by login ID.
+
+Function signature:
+```c
+int trade_get_account_info_by_id(const char* login_id, AccountInfo* account);
+```
+
+Parameters:
+- `login_id`: login ID
+- `account`: output account information
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Queries detailed account information by login ID.
+
+---
+
+#### trade_get_all_login_ids
+
+Get a list of all configured account login IDs.
+
+Function signature:
+```c
+int trade_get_all_login_ids(char*** account_ids, int* count);
+```
+
+Parameters:
+- `account_ids`: output array of login IDs (caller must free memory)
+- `count`: number of accounts
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Includes accounts that are not logged in. Caller should free memory using `trade_free_account_ids`.
+
+---
+
+#### trade_free_account_ids
+
+Free memory allocated for account ID lists.
+
+Function signature:
+```c
+void trade_free_account_ids(char** account_ids, int count);
+```
+
+Parameters:
+- `account_ids`: array of account IDs
+- `count`: array size
+
+Notes:
+Frees memory allocated by `trade_get_all_login_ids` or `trade_get_logged_in_login_ids`.
+
+---
+
+#### trade_get_account_count
+
+Get the number of configured accounts.
+
+Function signature:
+```c
+int trade_get_account_count(void);
+```
+
+Return values:
+- Number of accounts
+- negative: error
+
+Notes:
+Includes accounts that are not logged in.
+
+---
+
+#### trade_has_account
+
+Check whether a specified account exists.
+
+Function signature:
+```c
+int trade_has_account(const char* login_id);
+```
+
+Parameters:
+- `login_id`: login ID
+
+Return values:
+- `1`: exists
+- `0`: does not exist
+
+Notes:
+Checks if the given login ID is configured in the system.
+
+---
+
+#### trade_get_account_data_by_id
+
+Get the latest fund/account data using the full account identifier.
+
+Function signature:
+```c
+int trade_get_account_data_by_id(const char* login_id, const char* fund_account_id, 
+                                  const char* account_id, AccountData* data);
+```
+
+Parameters:
+- `login_id`: login ID
+- `fund_account_id`: fund account ID
+- `account_id`: securities account ID (to distinguish SH/SZ)
+- `data`: output data pointer
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+Notes:
+Fetches the latest account/fund data for the full account identifier (login + fund + securities account).
+
+---
+
+#### trade_get_all_account_data_by_fund_id
+
+Get fund/account data for all markets by login ID and fund account ID.
+
+Function signature:
+```c
+int trade_get_all_account_data_by_fund_id(const char* login_id, const char* fund_account_id,
+                                           AccountData* sh_data, AccountData* sz_data);
+```
+
+Parameters:
+- `login_id`: login ID
+- `fund_account_id`: fund account ID
+- `sh_data`: Shanghai market account data (may be NULL)
+- `sz_data`: Shenzhen market account data (may be NULL)
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+Notes:
+Fetches both Shanghai and Shenzhen market funds for the given login and fund account. You may request only one market by passing NULL for the other.
+
+---
+
+#### trade_get_all_account_data_by_login_id
+
+Get all fund data (for all fund accounts and markets) for a login ID.
+
+Function signature:
+```c
+int trade_get_all_account_data_by_login_id(const char* login_id, 
+                                            AccountData** account_data_array, int* count);
+```
+
+Parameters:
+- `login_id`: login ID
+- `account_data_array`: output array of AccountData (caller must free memory)
+- `count`: number of results
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Caller must free memory using `trade_free_query_results`.
+
+---
+
+### Trading operation interfaces
+
+#### trade_send_order
+
+Submit an order (asynchronous).
+
+Function signature:
+```c
+int64_t trade_send_order(const TradeOrderRequest* order);
+```
+
+Parameters:
+- `order`: order request
+
+Return values:
+- positive: generated request_id (used to track responses)
+- `0` or negative: failure
+
+Notes:
+Submits an asynchronous order request. The returned request_id can be used to match responses in callbacks.
+
+---
+
+#### trade_send_order_sync
+
+Submit an order synchronously.
+
+Function signature:
+```c
+int32_t trade_send_order_sync(const TradeOrderRequest* order, TradeOrderRspData* result, 
+                               int timeout_ms);
+```
+
+Parameters:
+- `order`: order request
+- `result`: output result data
+- `timeout_ms`: timeout in milliseconds
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Blocks until a result is returned or the timeout is reached.
+
+---
+
+#### trade_cancel_order
+
+Cancel an order (asynchronous).
+
+Function signature:
+```c
+int64_t trade_cancel_order(const AccountInfo* account, const int64_t orig_order_id,
+                            uint64_t orig_batch_id, MarketType market);
+```
+
+Parameters:
+- `account`: account info
+- `orig_order_id`: original order ID
+- `orig_batch_id`: original batch ID
+- `market`: market
+
+Return values:
+- positive: generated request_id
+- `0` or negative: failure
+
+Notes:
+Asynchronous cancel request; results are delivered via callbacks.
+
+---
+
+#### trade_cancel_order_sync
+
+Cancel an order synchronously.
+
+Function signature:
+```c
+int32_t trade_cancel_order_sync(const AccountInfo* account, const int64_t orig_order_id,
+                                 uint64_t orig_batch_id, MarketType market,
+                                 TradeOrderCancelRsqData* result, int timeout_ms);
+```
+
+Parameters:
+- `account`: account info
+- `orig_order_id`: original order ID
+- `orig_batch_id`: original batch ID
+- `market`: market
+- `result`: output result data
+- `timeout_ms`: timeout in milliseconds
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Blocks until the cancel response is received or the timeout is reached.
+
+---
+
+### Query interfaces
+
+#### trade_query_orders
+
+Query orders (asynchronous).
+
+Function signature:
+```c
+int64_t trade_query_orders(const AccountInfo* account, MarketType market, 
+                            const char* security_code, const int64_t order_id,
+                            const QueryRequestParams* params);
+```
+
+Parameters:
+- `account`: account info
+- `market`: market (required — which market to query)
+- `security_code`: security code (optional; NULL means all)
+- `order_id`: order ID (optional; 0 means all)
+- `params`: query parameters
+
+Return values:
+- positive: generated request_id
+- `0` or negative: failure
+
+Notes:
+Asynchronous; results returned via callbacks.
+
+---
+
+#### trade_query_orders_sync
+
+Query orders synchronously.
+
+Function signature:
+```c
+int32_t trade_query_orders_sync(const AccountInfo* account, MarketType market,
+                                 const char* security_code, const int64_t order_id,
+                                 const QueryRequestParams* params,
+                                 TradeOrderData** results, int* count, int timeout_ms,
+                                 char* error_msg);
+```
+
+Parameters:
+- `account`: account info
+- `market`: market
+- `security_code`: security code (optional)
+- `order_id`: order ID (optional)
+- `params`: query parameters
+- `results`: output array of results (caller must free)
+- `count`: number of results
+- `timeout_ms`: timeout in milliseconds
+- `error_msg`: optional error message buffer (suggested size: TRADE_ERROR_MSG_SIZE)
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Blocks until results or timeout. Caller must free results with `trade_free_query_results`.
+
+---
+
+#### trade_query_positions
+
+Query positions (asynchronous).
+
+Function signature:
+```c
+int64_t trade_query_positions(const AccountInfo* account, MarketType market,
+                               const char* security_code, const QueryRequestParams* params);
+```
+
+Return values:
+- positive: request_id
+- `0` or negative: failure
+
+Notes:
+Asynchronous; results returned via callbacks.
+
+---
+
+#### trade_query_positions_sync
+
+Query positions synchronously.
+
+Function signature:
+```c
+int32_t trade_query_positions_sync(const AccountInfo* account, MarketType market,
+                                    const char* security_code,
+                                    const QueryRequestParams* params,
+                                    PositionData** results, int* count, int timeout_ms,
+                                    char* error_msg);
+```
+
+Notes:
+Blocks until results; caller must free results using `trade_free_query_results`.
+
+---
+
+#### trade_query_funds
+
+Query funds (asynchronous).
+
+Function signature:
+```c
+int64_t trade_query_funds(const AccountInfo* account, MarketType market,
+                           const char* currency, const QueryRequestParams* params);
+```
+
+Notes:
+Asynchronous; results via callbacks.
+
+---
+
+#### trade_query_funds_sync
+
+Query funds synchronously.
+
+Function signature:
+```c
+int32_t trade_query_funds_sync(const AccountInfo* account, MarketType market,
+                                const char* currency,
+                                const QueryRequestParams* params,
+                                AccountData** results, int* count, int timeout_ms,
+                                char* error_msg);
+```
+
+Notes:
+Blocks until results; caller must free results.
+
+---
+
+#### trade_query_trades
+
+Query trades (asynchronous).
+
+Function signature:
+```c
+int64_t trade_query_trades(const AccountInfo* account, MarketType market,
+                            const char* security_code, const int64_t order_id,
+                            const QueryRequestParams* params);
+```
+
+Notes:
+Asynchronous; results via callbacks.
+
+---
+
+#### trade_query_trades_sync
+
+Query trades synchronously.
+
+Function signature:
+```c
+int32_t trade_query_trades_sync(const AccountInfo* account, MarketType market,
+                                 const char* security_code, const int64_t order_id,
+                                 const QueryRequestParams* params,
+                                 TradeFillData** results, int* count, int timeout_ms,
+                                 char* error_msg);
+```
+
+Notes:
+Blocks until results; caller must free results.
+
+---
+
+#### trade_bank_securities_transfer
+
+Perform a bank ↔ securities transfer (asynchronous).
+
+Function signature:
+```c
+int64_t trade_bank_securities_transfer(const AccountInfo* account,
+                                        BankSecuritiesTransferDirection direction,
+                                        MarketType market,
+                                        double transfer_amount,
+                                        const char* currency,
+                                        const char* bank_password,
+                                        const char* fund_password,
+                                        const char* remark);
+```
+
+Parameters:
+- `account`: account info
+- `direction`: transfer direction (1 = in, 2 = out)
+- `market`: market
+- `transfer_amount`: amount to transfer
+- `currency`: currency (optional, default CNY)
+- `bank_password`: bank password (optional)
+- `fund_password`: fund password (optional)
+- `remark`: remark (optional)
+
+Return values:
+- positive: request_id
+- `0` or negative: failure
+
+Notes:
+Asynchronous; results delivered via callbacks.
+
+---
+
+#### trade_bank_securities_transfer_sync
+
+Perform bank-securities transfer synchronously.
+
+Function signature:
+```c
+int32_t trade_bank_securities_transfer_sync(const AccountInfo* account,
+                                             BankSecuritiesTransferDirection direction,
+                                             MarketType market,
+                                             double transfer_amount,
+                                             const char* currency,
+                                             const char* bank_password,
+                                             const char* fund_password,
+                                             const char* remark,
+                                             BankSecuritiesTransferData* result,
+                                             int timeout_ms);
+```
+
+Notes:
+Blocks until result or timeout.
+
+---
+
+#### trade_fund_transfer
+
+Fund transfer between Shanghai and Shenzhen markets (asynchronous).
+
+Function signature:
+```c
+int64_t trade_fund_transfer(const AccountInfo* account,
+                             const char* fund_out_account_id,
+                             MarketType fund_out_market,
+                             const char* fund_in_account_id,
+                             MarketType fund_in_market,
+                             double transfer_amount);
+```
+
+Notes:
+Asynchronous; results via callbacks.
+
+---
+
+#### trade_fund_transfer_sync
+
+Fund transfer synchronously.
+
+Function signature:
+```c
+int32_t trade_fund_transfer_sync(const AccountInfo* account,
+                                  const char* fund_out_account_id,
+                                  MarketType fund_out_market,
+                                  const char* fund_in_account_id,
+                                  MarketType fund_in_market,
+                                  double transfer_amount,
+                                  FundTransferData* result,
+                                  int timeout_ms);
+```
+
+Notes:
+Blocks until result or timeout.
+
+---
+
+### Callback management
+
+#### trade_set_order_query_callback
+
+Set callback for order query results.
+
+Function signature:
+```c
+TradeOrderQueryCallbackHandle trade_set_order_query_callback(TradeOrderQueryCallbackType callback);
+```
+
+Return value:
+- callback handle (check if(handle) to verify)
+
+Notes:
+Called when an order query completes.
+
+---
+
+#### trade_remove_order_query_callback
+
+Remove order query callback.
+
+Function signature:
+```c
+int trade_remove_order_query_callback(TradeOrderQueryCallbackHandle handle);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### trade_set_fill_callback
+
+Set callback for fills (trades).
+
+Function signature:
+```c
+TradeFillCallbackHandle trade_set_fill_callback(TradeFillCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_fill_callback
+
+Remove fill callback.
+
+Function signature:
+```c
+int trade_remove_fill_callback(TradeFillCallbackHandle handle);
+```
+
+---
+
+#### trade_set_position_callback
+
+Set callback for position updates.
+
+Function signature:
+```c
+PositionCallbackHandle trade_set_position_callback(PositionCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_position_callback
+
+Remove position callback.
+
+Function signature:
+```c
+int trade_remove_position_callback(PositionCallbackHandle handle);
+```
+
+---
+
+#### trade_set_account_callback
+
+Set callback for account (fund) updates.
+
+Function signature:
+```c
+AccountCallbackHandle trade_set_account_callback(AccountCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_account_callback
+
+Remove account callback.
+
+Function signature:
+```c
+int trade_remove_account_callback(AccountCallbackHandle handle);
+```
+
+---
+
+#### trade_set_error_callback
+
+Set a callback for trade errors.
+
+Function signature:
+```c
+TradeErrorCallbackHandle trade_set_error_callback(TradeErrorCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_error_callback
+
+Remove error callback.
+
+Function signature:
+```c
+int trade_remove_error_callback(TradeErrorCallbackHandle handle);
+```
+
+---
+
+#### trade_set_bank_securities_transfer_callback
+
+Set callback for bank-securities transfer results.
+
+Function signature:
+```c
+BankSecuritiesTransferCallbackHandle trade_set_bank_securities_transfer_callback(BankSecuritiesTransferCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_bank_securities_transfer_callback
+
+Remove bank-securities transfer callback.
+
+Function signature:
+```c
+int trade_remove_bank_securities_transfer_callback(BankSecuritiesTransferCallbackHandle handle);
+```
+
+---
+
+#### trade_set_fund_transfer_callback
+
+Set callback for fund transfer results.
+
+Function signature:
+```c
+FundTransferCallbackHandle trade_set_fund_transfer_callback(FundTransferCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_fund_transfer_callback
+
+Remove fund transfer callback.
+
+Function signature:
+```c
+int trade_remove_fund_transfer_callback(FundTransferCallbackHandle handle);
+```
+
+---
+
+#### trade_set_order_rsp_callback
+
+Set callback for order responses.
+
+Function signature:
+```c
+TradeOrderRspCallbackHandle trade_set_order_rsp_callback(TradeOrderRspCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_order_rsp_callback
+
+Remove order response callback.
+
+Function signature:
+```c
+int trade_remove_order_rsp_callback(TradeOrderRspCallbackHandle handle);
+```
+
+---
+
+#### trade_set_order_rtn_callback
+
+Set callback for order push notifications.
+
+Function signature:
+```c
+TradeOrderCallbackHandle trade_set_order_rtn_callback(TradeOrderCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+Notes:
+Called when the trading system pushes order updates (status changes).
+
+---
+
+#### trade_remove_order_rtn_callback
+
+Remove order push callback.
+
+Function signature:
+```c
+int trade_remove_order_rtn_callback(TradeOrderCallbackHandle handle);
+```
+
+---
+
+#### trade_set_cancel_rsp_callback
+
+Set callback for cancel responses.
+
+Function signature:
+```c
+TradeOrderCancelRspCallbackHandle trade_set_cancel_rsp_callback(TradeOrderCancelRspCallbackType callback);
+```
+
+Return value:
+- callback handle
+
+---
+
+#### trade_remove_cancel_rsp_callback
+
+Remove cancel response callback.
+
+Function signature:
+```c
+int trade_remove_cancel_rsp_callback(TradeOrderCancelRspCallbackHandle handle);
+```
+
+---
+
+### Data retrieval interfaces (polling mode)
+
+#### trade_get_bank_securities_transfer_data
+
+Get the latest bank-securities transfer data.
+
+Function signature:
+```c
+int trade_get_bank_securities_transfer_data(BankSecuritiesTransferData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+Notes:
+Non-blocking; fetches the latest transfer data from the internal queue.
+
+---
+
+#### trade_get_fund_transfer_data
+
+Get the latest fund transfer data.
+
+Function signature:
+```c
+int trade_get_fund_transfer_data(FundTransferData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### trade_get_order_rsp_data
+
+Get the latest order response data.
+
+Function signature:
+```c
+int trade_get_order_rsp_data(TradeOrderRspData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+Notes:
+Non-blocking; fetches from queue.
+
+---
+
+#### trade_get_cancel_rsp_data
+
+Get the latest cancel response data.
+
+Function signature:
+```c
+int trade_get_cancel_rsp_data(TradeOrderCancelRsqData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### trade_get_order_data
+
+Get the latest order data (including query results and pushed orders).
+
+Function signature:
+```c
+int trade_get_order_data(TradeOrderData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### trade_get_fill_data
+
+Get the latest fill/trade data.
+
+Function signature:
+```c
+int trade_get_fill_data(TradeFillData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+#### trade_get_position_data
+
+Get the latest position data.
+
+Function signature:
+```c
+int trade_get_position_data(PositionData* data);
+```
+
+Return values:
+- `1`: success
+- `0`: no data
+- `-1`: failure
+
+---
+
+### Utility interfaces
+
+#### trade_free_query_results
+
+Free memory of query result arrays.
+
+Function signature:
+```c
+void trade_free_query_results(void* results, int count);
+```
+
+Parameters:
+- `results`: result array pointer
+- `count`: array size
+
+Notes:
+Frees memory allocated by synchronous query functions (e.g. `trade_query_orders_sync`, `trade_query_positions_sync`).
+
+---
+
+#### trade_set_db_manager
+
+Set the database manager for the trade service.
+
+Function signature:
+```c
+int trade_set_db_manager(void* db_manager);
+```
+
+Parameters:
+- `db_manager`: pointer to the DB manager
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Used to persist trade-related data.
+
+---
+
+#### trade_get_db_manager
+
+Get the trade service database manager.
+
+Function signature:
+```c
+void* trade_get_db_manager(void);
+```
+
+Return values:
+- pointer to the DB manager
+
+---
+
+#### trade_set_quote_parser
+
+Set the quote parser for the trade service.
+
+Function signature:
+```c
+int trade_set_quote_parser(void* quote_parser);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Used by trade service to obtain real-time market data.
+
+---
+
+#### trade_get_quote_parser
+
+Get the quote parser used by the trade service.
+
+Function signature:
+```c
+void* trade_get_quote_parser(void);
+```
+
+Return values:
+- pointer to the quote parser
+
+---
+
+## Strategy Interface
+
+The strategy interface provides complete services for strategy management, strategy instance control, pending order queue management and data distribution. It supports concurrent strategies, dynamic configuration updates and real-time data access.
+
+#### Contents
+
+- [Service lifecycle management](#service-lifecycle-management-2)
+- [Strategy instance management](#strategy-instance-management)
+- [Batch strategy operations](#batch-strategy-operations)
+- [Status query interfaces](#status-query-interfaces-2)
+- [Strategy configuration management](#strategy-configuration-management)
+- [Pending order queue management](#pending-order-queue-management)
+- [Strategy data retrieval](#strategy-data-retrieval)
+- [Strategy metadata queries](#strategy-metadata-queries)
+- [Dependency service management](#dependency-service-management)
+- [Data dispatching interfaces](#data-dispatching-interfaces)
+- [Global strategy module management](#global-strategy-module-management)
+
+---
+
+### Service lifecycle management
+
+#### strategy_init
+
+Initialize strategy service (using default config file).
+
+Function signature:
+```c
+int strategy_init(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+Notes:
+Must be called before using other strategy interfaces.
+
+---
+
+#### strategy_init_with_config
+
+Initialize strategy service with a specified config file.
+
+Function signature:
+```c
+int strategy_init_with_config(const char* config_file);
+```
+
+Parameters:
+- `config_file`: config file path
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_start_service
+
+Start the strategy service.
+
+Function signature:
+```c
+int strategy_start_service(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_stop_service
+
+Stop the strategy service.
+
+Function signature:
+```c
+int strategy_stop_service(void);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_release
+
+Release strategy service resources.
+
+Function signature:
+```c
+void strategy_release(void);
+```
+
+Notes:
+Frees all resources used by the strategy service. Re-initialization required after calling.
+
+---
+
+#### strategy_get_service_instance
+
+Get the strategy service instance pointer.
+
+Function signature:
+```c
+void* strategy_get_service_instance(void);
+```
+
+Return values:
+- pointer to the strategy service instance
+
+---
+
+### Strategy instance management
+
+#### strategy_create_instance
+
+Create a strategy instance.
+
+Function signature:
+```c
+int strategy_create_instance(const char* strategy_id, const char* config);
+```
+
+Parameters:
+- `strategy_id`: strategy ID
+- `config`: JSON string configuration, or NULL to use default
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_start_instance
+
+Start a specific strategy instance.
+
+Function signature:
+```c
+int strategy_start_instance(const char* strategy_id);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_stop_instance
+
+Stop a specific strategy instance.
+
+Function signature:
+```c
+int strategy_stop_instance(const char* strategy_id);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_destroy_instance
+
+Destroy a specific strategy instance.
+
+Function signature:
+```c
+int strategy_destroy_instance(const char* strategy_id);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_instance_exists
+
+Check whether a strategy instance exists.
+
+Function signature:
+```c
+int strategy_instance_exists(const char* strategy_id);
+```
+
+Return values:
+- `1`: exists
+- `0`: does not exist
+
+---
+
+#### strategy_instance_is_active
+
+Check whether a strategy instance is active (running).
+
+Function signature:
+```c
+int strategy_instance_is_active(const char* strategy_id);
+```
+
+Return values:
+- `1`: active
+- `0`: not active
+
+---
+
+#### strategy_get_instance_status
+
+Get the status of a strategy instance.
+
+Function signature:
+```c
+int strategy_get_instance_status(const char* strategy_id);
+```
+
+Return values:
+- status value
+- `-1`: instance does not exist
+
+---
+
+### Batch strategy operations
+
+#### strategy_start_all_instances
+
+Start all strategy instances.
+
+Function signature:
+```c
+int strategy_start_all_instances(void);
+```
+
+Return values:
+- number of strategies successfully started
+
+---
+
+#### strategy_stop_all_instances
+
+Stop all active strategy instances.
+
+Function signature:
+```c
+int strategy_stop_all_instances(void);
+```
+
+Return values:
+- number of strategies successfully stopped
+
+---
+
+#### strategy_destroy_all_instances
+
+Destroy all strategy instances.
+
+Function signature:
+```c
+int strategy_destroy_all_instances(void);
+```
+
+Return values:
+- number of strategies successfully destroyed
+
+---
+
+### Status query interfaces
+
+#### strategy_is_service_running
+
+Check whether the strategy service is running.
+
+Function signature:
+```c
+int strategy_is_service_running(void);
+```
+
+Return values:
+- `1`: running
+- `0`: stopped
+
+---
+
+#### strategy_is_service_initialized
+
+Check whether the strategy service is initialized.
+
+Function signature:
+```c
+int strategy_is_service_initialized(void);
+```
+
+Return values:
+- `1`: initialized
+- `0`: not initialized
+
+---
+
+#### strategy_get_active_instance_count
+
+Get the number of active strategy instances.
+
+Function signature:
+```c
+size_t strategy_get_active_instance_count(void);
+```
+
+Return values:
+- number of active strategies
+
+---
+
+#### strategy_get_last_error
+
+Get the last error message.
+
+Function signature:
+```c
+const char* strategy_get_last_error(void);
+```
+
+Return values:
+- error message string
+
+---
+
+#### strategy_get_registered_strategy_ids
+
+Get all registered strategy IDs (JSON array string).
+
+Function signature:
+```c
+const char* strategy_get_registered_strategy_ids(void);
+```
+
+Return values:
+- JSON array string of registered strategy IDs
+
+---
+
+#### strategy_get_active_strategy_ids
+
+Get all active strategy IDs (JSON array string).
+
+Function signature:
+```c
+const char* strategy_get_active_strategy_ids(void);
+```
+
+Return values:
+- JSON array string of active strategy IDs
+
+---
+
+#### strategy_get_thread_pool_status
+
+Get thread pool status information (JSON string).
+
+Function signature:
+```c
+const char* strategy_get_thread_pool_status(void);
+```
+
+Return values:
+- JSON string describing thread pool status
+
+---
+
+### Strategy configuration management
+
+#### strategy_update_instance_config
+
+Update a strategy instance's configuration.
+
+Function signature:
+```c
+int strategy_update_instance_config(const char* strategy_id, const char* config);
+```
+
+Parameters:
+- `strategy_id`: strategy ID
+- `config`: JSON string of configuration
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_get_instance_config
+
+Get a strategy instance's configuration.
+
+Function signature:
+```c
+const char* strategy_get_instance_config(const char* strategy_id);
+```
+
+Return values:
+- JSON configuration string
+
+---
+
+### Pending order queue management
+
+#### strategy_add_order_queue
+
+Add a pending order to a strategy.
+
+Function signature:
+```c
+int strategy_add_order_queue(const char* strategy_id, const char* order);
+```
+
+Parameters:
+- `strategy_id`: strategy ID
+- `order`: pending order as JSON string
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_update_order_queue
+
+Update a pending order.
+
+Function signature:
+```c
+int strategy_update_order_queue(const char* strategy_id, int64_t order_id, const char* order);
+```
+
+---
+
+#### strategy_cancel_order_queue
+
+Cancel a pending order.
+
+Function signature:
+```c
+int strategy_cancel_order_queue(const char* strategy_id, int64_t order_id);
+```
+
+---
+
+#### strategy_remove_order_queue
+
+Remove a pending order from a strategy.
+
+Function signature:
+```c
+int strategy_remove_order_queue(const char* strategy_id, int64_t order_id);
+```
+
+---
+
+#### strategy_batch_add_order_queue
+
+Batch add pending orders to a strategy.
+
+Function signature:
+```c
+int strategy_batch_add_order_queue(const char* strategy_id, const char* orders);
+```
+
+Parameters:
+- `orders`: JSON array string of pending orders
+
+---
+
+#### strategy_cancel_all_active_order_queue
+
+Cancel all active pending orders for a strategy.
+
+Function signature:
+```c
+int strategy_cancel_all_active_order_queue(const char* strategy_id);
+```
+
+---
+
+#### strategy_remove_all_active_order_queue
+
+Remove all active pending orders for a strategy.
+
+Function signature:
+```c
+int strategy_remove_all_active_order_queue(const char* strategy_id);
+```
+
+---
+
+#### strategy_get_order_queue
+
+Get the pending order queue for a strategy.
+
+Function signature:
+```c
+const char* strategy_get_order_queue(const char* strategy_id);
+```
+
+Return values:
+- JSON array string of pending orders
+
+---
+
+### Strategy data retrieval
+
+#### strategy_get_instance_data
+
+Get runtime data for a strategy instance.
+
+Function signature:
+```c
+const char* strategy_get_instance_data(const char* strategy_id, const char* data_type);
+```
+
+Parameters:
+- `strategy_id`: strategy ID
+- `data_type`: data type such as "orders", "positions", "metrics", "status"
+
+Return values:
+- JSON string of data
+- `NULL`: data type not supported or instance not found
+
+---
+
+#### strategy_get_available_data_types
+
+Get the list of data types supported by a strategy.
+
+Function signature:
+```c
+const char* strategy_get_available_data_types(const char* strategy_id);
+```
+
+Return values:
+- JSON array string of supported data types
+
+---
+
+#### strategy_set_data_change_callback
+
+Set a data-change callback for a strategy instance.
+
+Function signature:
+```c
+StrategyDataCallbackHandle strategy_set_data_change_callback(const char* strategy_id, StrategyDataCallbackType callback);
+```
+
+Return values:
+- callback handle
+
+Notes:
+Callback is invoked when strategy data changes; avoid blocking operations inside the callback.
+
+---
+
+#### strategy_remove_data_change_callback
+
+Remove a data-change callback for a strategy instance.
+
+Function signature:
+```c
+int strategy_remove_data_change_callback(const char* strategy_id, StrategyDataCallbackHandle handle);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+### Strategy metadata queries
+
+#### strategy_get_strategy_name
+
+Get the name of a strategy.
+
+Function signature:
+```c
+const char* strategy_get_strategy_name(const char* strategy_id);
+```
+
+Return values:
+- strategy name string
+
+---
+
+#### strategy_get_strategy_description
+
+Get a strategy's description.
+
+Function signature:
+```c
+const char* strategy_get_strategy_description(const char* strategy_id);
+```
+
+Return values:
+- strategy description string
+
+---
+
+#### strategy_is_strategy_registered
+
+Check whether a strategy is registered.
+
+Function signature:
+```c
+int strategy_is_strategy_registered(const char* strategy_id);
+```
+
+Return values:
+- `1`: registered
+- `0`: not registered
+
+---
+
+### Dependency service management
+
+#### strategy_set_quote_parser
+
+Set the quote parser used by the strategy service.
+
+Function signature:
+```c
+int strategy_set_quote_parser(void* quote_parser);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_set_trade_handler
+
+Set the trade handler used by the strategy service.
+
+Function signature:
+```c
+int strategy_set_trade_handler(void* trade_handler);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_set_db_manager
+
+Set the DB manager used by the strategy service.
+
+Function signature:
+```c
+int strategy_set_db_manager(void* db_manager);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_get_db_manager
+
+Get the strategy service DB manager.
+
+Function signature:
+```c
+void* strategy_get_db_manager(void);
+```
+
+Return values:
+- pointer to DB manager
+
+---
+
+#### strategy_get_quote_parser
+
+Get the quote parser used by the strategy service.
+
+Function signature:
+```c
+void* strategy_get_quote_parser(void);
+```
+
+Return values:
+- pointer to the quote parser
+
+---
+
+#### strategy_get_trade_handler
+
+Get the trade handler used by the strategy service.
+
+Function signature:
+```c
+void* strategy_get_trade_handler(void);
+```
+
+Return values:
+- pointer to the trade handler
+
+---
+
+#### strategy_set_trading_time_manager
+
+Set the trading time manager used by the strategy service.
+
+Function signature:
+```c
+int strategy_set_trading_time_manager(void* trading_time_manager);
+```
+
+Return values:
+- `0`: success
+- negative: failure
+
+---
+
+#### strategy_get_trading_time_manager
+
+Get the trading time manager used by the strategy service.
+
+Function signature:
+```c
+void* strategy_get_trading_time_manager(void);
+```
+
+Return values:
+- pointer to trading time manager
+
+---
+
+### Data dispatching interfaces
+
+These functions dispatch various data types to all active strategy instances.
+
+#### strategy_dispatch_index_data
+
+Dispatch index data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_index_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_depth_data
+
+Dispatch depth data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_depth_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_depth_fifty_data
+
+Dispatch depth-50 data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_depth_fifty_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_entrust_data
+
+Dispatch entrust data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_entrust_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_trade_data
+
+Dispatch trade data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_trade_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_order_rtn_data
+
+Dispatch order return data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_order_rtn_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_order_query_data
+
+Dispatch order query results to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_order_query_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_fill_data
+
+Dispatch fill (trade) data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_fill_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_position_data
+
+Dispatch position data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_position_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_account_data
+
+Dispatch account data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_account_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_trade_error
+
+Dispatch a trade error to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_trade_error(int error_code, const char* error_msg);
+```
+
+---
+
+#### strategy_dispatch_order_rsp_data
+
+Dispatch order response data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_order_rsp_data(const void* data);
+```
+
+---
+
+#### strategy_dispatch_cancel_rsp_data
+
+Dispatch cancel response data to all active strategies.
+
+Function signature:
+```c
+void strategy_dispatch_cancel_rsp_data(const void* data);
+```
+
+---
+
+### Global strategy module management
+
+#### strategy_get_registered_modules
+
+Get the list of registered strategy modules (JSON array string).
+
+Function signature:
+```c
+const char* strategy_get_registered_modules(void);
+```
+
+Return values:
+- JSON array string of module names
+
+---
+
+#### strategy_is_module_registered
+
+Check whether a strategy module is registered.
+
+Function signature:
+```c
+int strategy_is_module_registered(const char* module_name);
+```
+
+Return values:
+- `1`: registered
+- `0`: not registered
+
+---
