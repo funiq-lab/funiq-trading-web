@@ -28,15 +28,18 @@ Funiq Trading 系统的各项配置，包括环境变量、系统配置、行情
 | STRATEGY_CONFIG_FILE | string | 策略配置文件路径 | - | ./strategy_config.json |
 | SYSTEM_CONFIG_FILE | string | 系统配置文件路径 | - | ./system_config.json |
 | FT_DB_PATH | string | 数据库文件路径 | - | data/trading.db |
+| FT_DB_BACKUP_PATH | string | 数据库备份目录路径 | - | data/backup |
 | FT_DB_MIGRATION_CONFIG_PATH | string | 数据库迁移配置路径 | - | migrations/migration.config.ini |
 
 ### 网络配置
 
 | 环境变量 | 类型 | 说明 | 默认值 | 示例 |
 |---------|------|------|--------|------|
-| HTTP_SERVER_ADDRESS | string | HTTP服务器监听地址 | 0.0.0.0 | 0.0.0.0 |
+| HTTP_SERVER_ADDRESS | string | HTTP服务器监听地址 | 127.0.0.1 | 127.0.0.1, 0.0.0.0 |
 | HTTP_SERVER_PORT | integer | HTTP服务器监听端口 | 8080 | 8080 |
 | HTTP_SERVER_THREADS | integer | HTTP服务器工作线程数 | 4 | 4 |
+| HTTP_REQUEST_LOGGING | boolean | 是否输出HTTP请求日志 | false | true, false |
+| HTTP_LOG_SENSITIVE_FIELDS | string | 请求日志中需要脱敏的字段（逗号分隔） | password,passwd,pwd,bank_password,fund_password,token,secret,key,api_key,access_token,refresh_token | password,token,secret |
 
 ### 日志配置
 
@@ -60,22 +63,26 @@ TRADE_CONFIG_FILE=./trade_config.json
 STRATEGY_CONFIG_FILE=./strategy_config.json
 SYSTEM_CONFIG_FILE=./system_config.json
 FT_DB_PATH=data/trading.db
+FT_DB_BACKUP_PATH=data/backup
 FT_DB_MIGRATION_CONFIG_PATH=migrations/migration.config.ini
 
 # Network configuration
-HTTP_SERVER_ADDRESS=0.0.0.0
+HTTP_SERVER_ADDRESS=127.0.0.1
 HTTP_SERVER_PORT=8080
 HTTP_SERVER_THREADS=4
+HTTP_REQUEST_LOGGING=false
+# Sensitive fields to mask in request logs (comma-separated)
+HTTP_LOG_SENSITIVE_FIELDS=password,passwd,pwd,bank_password,fund_password,token,secret,key,api_key,access_token,refresh_token
 
 # Logger configuration
-LOG_ENABLED=true
-LOG_LEVEL=debug
+LOG_ENABLED=false
+LOG_LEVEL=info
 LOG_CONSOLE=true
 LOG_FILE_ENABLED=true
 LOG_ASYNC=true
 LOG_FILE_DIR=logs
 LOG_MAX_FILES=30
-LOG_FLUSH_LEVEL=debug
+LOG_FLUSH_LEVEL=error
 ```
 
 ---

@@ -28,6 +28,7 @@ Environment variables are usually defined in a `.env` file which the system load
 | STRATEGY_CONFIG_FILE | string | Path to strategy configuration file | - | ./strategy_config.json |
 | SYSTEM_CONFIG_FILE | string | Path to system configuration file | - | ./system_config.json |
 | FT_DB_PATH | string | Path to the database file | - | data/trading.db |
+| FT_DB_BACKUP_PATH | string | Database backup directory path | - | data/backup |
 | FT_DB_MIGRATION_CONFIG_PATH | string | Path to DB migration config | - | migrations/migration.config.ini |
 
 ### Network configuration
@@ -37,6 +38,8 @@ Environment variables are usually defined in a `.env` file which the system load
 | HTTP_SERVER_ADDRESS | string | HTTP server listen address | 0.0.0.0 | 0.0.0.0 |
 | HTTP_SERVER_PORT | integer | HTTP server listen port | 8080 | 8080 |
 | HTTP_SERVER_THREADS | integer | Number of worker threads for HTTP server | 4 | 4 |
+| HTTP_REQUEST_LOGGING | boolean | Whether to log HTTP requests | false | true, false |
+| HTTP_LOG_SENSITIVE_FIELDS | string | Fields to mask in request logs (comma-separated) | password,passwd,pwd,bank_password,fund_password,token,secret,key,api_key,access_token,refresh_token | password,token,secret |
 
 ### Logging configuration
 
@@ -60,22 +63,26 @@ TRADE_CONFIG_FILE=./trade_config.json
 STRATEGY_CONFIG_FILE=./strategy_config.json
 SYSTEM_CONFIG_FILE=./system_config.json
 FT_DB_PATH=data/trading.db
+FT_DB_BACKUP_PATH=data/backup
 FT_DB_MIGRATION_CONFIG_PATH=migrations/migration.config.ini
 
 # Network configuration
-HTTP_SERVER_ADDRESS=0.0.0.0
+HTTP_SERVER_ADDRESS=127.0.0.1
 HTTP_SERVER_PORT=8080
 HTTP_SERVER_THREADS=4
+HTTP_REQUEST_LOGGING=false
+# Sensitive fields to mask in request logs (comma-separated)
+HTTP_LOG_SENSITIVE_FIELDS=password,passwd,pwd,bank_password,fund_password,token,secret,key,api_key,access_token,refresh_token
 
 # Logger configuration
-LOG_ENABLED=true
-LOG_LEVEL=debug
+LOG_ENABLED=false
+LOG_LEVEL=info
 LOG_CONSOLE=true
 LOG_FILE_ENABLED=true
 LOG_ASYNC=true
 LOG_FILE_DIR=logs
 LOG_MAX_FILES=30
-LOG_FLUSH_LEVEL=debug
+LOG_FLUSH_LEVEL=error
 ```
 
 ---
