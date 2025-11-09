@@ -13,6 +13,7 @@ const ENLocale: I18nStrings = {
   ...baseStrings,
   'on_this_page': 'On This Page',
   'search': 'Search',
+  'no_results_found': 'No results found',
   docs: "Docs",
   'paths.getting-started': 'Getting Started',
   'paths.apis': 'APIs',

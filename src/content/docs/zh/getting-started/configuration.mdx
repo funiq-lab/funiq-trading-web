@@ -23,33 +23,33 @@ Funiq Trading 系统的各项配置，包括环境变量、系统配置、行情
 
 | 环境变量 | 类型 | 说明 | 默认值 | 示例 |
 |---------|------|------|--------|------|
-| `QUOTE_CONFIG_FILE` | string | 行情配置文件路径 | - | `./quote_config.json` |
-| `TRADE_CONFIG_FILE` | string | 交易配置文件路径 | - | `./trade_config.json` |
-| `STRATEGY_CONFIG_FILE` | string | 策略配置文件路径 | - | `./strategy_config.json` |
-| `SYSTEM_CONFIG_FILE` | string | 系统配置文件路径 | - | `./system_config.json` |
-| `FT_DB_PATH` | string | 数据库文件路径 | - | `data/trading.db` |
-| `FT_DB_MIGRATION_CONFIG_PATH` | string | 数据库迁移配置路径 | - | `migrations/migration.config.ini` |
+| QUOTE_CONFIG_FILE | string | 行情配置文件路径 | - | ./quote_config.json |
+| TRADE_CONFIG_FILE | string | 交易配置文件路径 | - | ./trade_config.json |
+| STRATEGY_CONFIG_FILE | string | 策略配置文件路径 | - | ./strategy_config.json |
+| SYSTEM_CONFIG_FILE | string | 系统配置文件路径 | - | ./system_config.json |
+| FT_DB_PATH | string | 数据库文件路径 | - | data/trading.db |
+| FT_DB_MIGRATION_CONFIG_PATH | string | 数据库迁移配置路径 | - | migrations/migration.config.ini |
 
 ### 网络配置
 
 | 环境变量 | 类型 | 说明 | 默认值 | 示例 |
 |---------|------|------|--------|------|
-| `HTTP_SERVER_ADDRESS` | string | HTTP服务器监听地址 | `0.0.0.0` | `0.0.0.0` |
-| `HTTP_SERVER_PORT` | integer | HTTP服务器监听端口 | `8080` | `8080` |
-| `HTTP_SERVER_THREADS` | integer | HTTP服务器工作线程数 | `4` | `4` |
+| HTTP_SERVER_ADDRESS | string | HTTP服务器监听地址 | 0.0.0.0 | 0.0.0.0 |
+| HTTP_SERVER_PORT | integer | HTTP服务器监听端口 | 8080 | 8080 |
+| HTTP_SERVER_THREADS | integer | HTTP服务器工作线程数 | 4 | 4 |
 
 ### 日志配置
 
 | 环境变量 | 类型 | 说明 | 默认值 | 示例 |
 |---------|------|------|--------|------|
-| `LOG_ENABLED` | boolean | 是否启用日志 | `true` | `true` |
-| `LOG_LEVEL` | string | 日志级别 | `debug` | `debug`, `info`, `warn`, `error` |
-| `LOG_CONSOLE` | boolean | 是否输出到控制台 | `true` | `true` |
-| `LOG_FILE_ENABLED` | boolean | 是否写入日志文件 | `true` | `true` |
-| `LOG_ASYNC` | boolean | 是否使用异步日志 | `true` | `true` |
-| `LOG_FILE_DIR` | string | 日志文件目录 | `logs` | `logs` |
-| `LOG_MAX_FILES` | integer | 日志文件最大保留数量 | `30` | `30` |
-| `LOG_FLUSH_LEVEL` | string | 日志刷新级别 | `debug` | `debug`, `info`, `warn`, `error` |
+| LOG_ENABLED | boolean | 是否启用日志 | true | true |
+| LOG_LEVEL | string | 日志级别 | debug | debug, info, warn, error |
+| LOG_CONSOLE | boolean | 是否输出到控制台 | true | true |
+| LOG_FILE_ENABLED | boolean | 是否写入日志文件 | true | true |
+| LOG_ASYNC | boolean | 是否使用异步日志 | true | true |
+| LOG_FILE_DIR | string | 日志文件目录 | logs | logs |
+| LOG_MAX_FILES | integer | 日志文件最大保留数量 | 30 | 30 |
+| LOG_FLUSH_LEVEL | string | 日志刷新级别 | debug | debug, info, warn, error |
 
 ### 配置示例
 
@@ -194,11 +194,11 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `id` | string | 是 | 解析器唯一标识符 |
-| `active` | boolean | 是 | 是否启用该解析器 |
-| `module` | string | 是 | 解析器模块名称（动态库名称） |
-| `config` | object | 是 | 解析器详细配置 |
-| `data` | array | 否 | 数据输出配置数组 |
+| id | string | 是 | 解析器唯一标识符 |
+| active | boolean | 是 | 是否启用该解析器 |
+| module | string | 是 | 解析器模块名称（动态库名称） |
+| config | object | 是 | 解析器详细配置 |
+| data | array | 否 | 数据输出配置数组 |
 
 ### 解析器详细配置（config）
 
@@ -206,53 +206,53 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |-------|------|------|--------|------|
-| `callback_mode` | boolean | 否 | `false` | 是否使用回调模式推送数据 |
-| `extended_config_file` | string | 否 | - | 扩展配置文件路径（由具体解析器使用） |
+| callback_mode | boolean | 否 | false | 是否使用回调模式推送数据 |
+| extended_config_file | string | 否 | - | 扩展配置文件路径（由具体解析器使用） |
 
 #### 订阅配置（subscription）
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `markets` | array | 否 | 市场列表，支持 `"sse"`（上交所）、`"szse"`（深交所） |
-| `data_types` | array | 否 | 数据类型列表，支持 `"index"`、`"depth"`、`"entrust"`、`"trade"`、`"depth_fifty"` |
-| `securities` | array | 否 | 证券代码列表，可以是字符串数组或对象数组 |
+| markets | array | 否 | 市场列表，支持 "sse"（上交所）、"szse"（深交所） |
+| data_types | array | 否 | 数据类型列表，支持 "index"、"depth"、"entrust"、"trade"、"depth_fifty" |
+| securities | array | 否 | 证券代码列表，可以是字符串数组或对象数组 |
 
 #### 性能统计配置（performance）
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |-------|------|------|--------|------|
-| `enabled` | boolean | 否 | `false` | 是否启用性能统计 |
-| `report_interval_ms` | integer | 否 | `5000` | 性能报告间隔（毫秒） |
-| `enable_latency_stats` | boolean | 否 | `false` | 是否启用延迟统计 |
-| `enable_throughput_stats` | boolean | 否 | `false` | 是否启用吞吐量统计 |
+| enabled | boolean | 否 | false | 是否启用性能统计 |
+| report_interval_ms | integer | 否 | 5000 | 性能报告间隔（毫秒） |
+| enable_latency_stats | boolean | 否 | false | 是否启用延迟统计 |
+| enable_throughput_stats | boolean | 否 | false | 是否启用吞吐量统计 |
 
 #### Mock 模式配置（mock）
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |-------|------|------|--------|------|
-| `enabled` | boolean | 否 | `false` | 是否启用 Mock 模式 |
-| `mock_data_file` | string | 否 | - | Mock 数据文件路径（二进制格式） |
-| `loop_replay` | boolean | 否 | `true` | 是否循环回放数据 |
-| `csv_mode` | boolean | 否 | `false` | 是否使用 CSV 模式 |
-| `csv_files` | object | 否 | - | CSV 文件配置对象 |
+| enabled | boolean | 否 | false | 是否启用 Mock 模式 |
+| mock_data_file | string | 否 | - | Mock 数据文件路径（二进制格式） |
+| loop_replay | boolean | 否 | true | 是否循环回放数据 |
+| csv_mode | boolean | 否 | false | 是否使用 CSV 模式 |
+| csv_files | object | 否 | - | CSV 文件配置对象 |
 
 ##### CSV 文件配置（csv_files）
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `depth` | string | 否 | 十档行情 CSV 文件路径 |
-| `index` | string | 否 | 指数行情 CSV 文件路径 |
-| `entrust` | string | 否 | 委托队列 CSV 文件路径 |
-| `trade` | string | 否 | 逐笔成交 CSV 文件路径 |
-| `depth_fifty` | string | 否 | 五十档行情 CSV 文件路径 |
+| depth | string | 否 | 十档行情 CSV 文件路径 |
+| index | string | 否 | 指数行情 CSV 文件路径 |
+| entrust | string | 否 | 委托队列 CSV 文件路径 |
+| trade | string | 否 | 逐笔成交 CSV 文件路径 |
+| depth_fifty | string | 否 | 五十档行情 CSV 文件路径 |
 
 ### 数据输出配置（data）
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `type` | string | 是 | 输出类型：`"shared_memory"`、`"file"`、`"udp"` |
-| `active` | boolean | 是 | 是否启用该输出 |
-| `config` | object | 否 | 输出详细配置 |
+| type | string | 是 | 输出类型："shared_memory"、"file"、"udp" |
+| active | boolean | 是 | 是否启用该输出 |
+| config | object | 否 | 输出详细配置 |
 
 #### 共享内存输出配置
 
@@ -355,7 +355,7 @@ LOG_FLUSH_LEVEL=debug
 
 ### 注意事项
 
-1. **回调模式**：推荐在策略交易场景使用 `callback_mode: true` 以获得更低的延迟
+1. **回调模式**：推荐在策略交易场景使用 callback_mode: true 以获得更低的延迟
 3. **Mock 模式**：仅用于开发测试，不能用于实盘交易
 
 ---
@@ -384,11 +384,11 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `id` | string | 是 | 交易处理器唯一标识符 |
-| `active` | boolean | 是 | 是否启用该处理器 |
-| `module` | string | 是 | 交易处理器模块名称（动态库名称） |
-| `config` | object | 是 | 交易处理器详细配置 |
-| `data` | array | 否 | 数据输出配置数组 |
+| id | string | 是 | 交易处理器唯一标识符 |
+| active | boolean | 是 | 是否启用该处理器 |
+| module | string | 是 | 交易处理器模块名称（动态库名称） |
+| config | object | 是 | 交易处理器详细配置 |
+| data | array | 否 | 数据输出配置数组 |
 
 ### 处理器详细配置（config）
 
@@ -396,9 +396,9 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |-------|------|------|--------|------|
-| `callback_mode` | boolean | 否 | `true` | 是否使用回调模式推送交易回报 |
-| `extended_config_file` | string | 否 | - | 扩展配置文件路径（由具体处理器使用） |
-| `login_mode` | integer | 否 | `1` | 登录模式：`1` = 客户号（cust_id），`2` = 资金账号（fund_account_id） |
+| callback_mode | boolean | 否 | true | 是否使用回调模式推送交易回报 |
+| extended_config_file | string | 否 | - | 扩展配置文件路径（由具体处理器使用） |
+| login_mode | integer | 否 | 1 | 登录模式：1 = 客户号（cust_id），2 = 资金账号（fund_account_id） |
 
 #### 账户配置（accounts）
 
@@ -406,21 +406,21 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `login_id` | string | 是 | 登录账号 |
-| `cust_id` | string | 是 | 客户号 |
-| `fund_account_id` | string | 是 | 资金账号 |
-| `account_id_sh` | string | 条件 | 上海证券账号（至少需要上海或深圳之一） |
-| `account_id_sz` | string | 条件 | 深圳证券账号（至少需要上海或深圳之一） |
-| `branch_id` | string | 是 | 营业部代码 |
-| `password` | string | 是 | 交易密码 |
+| login_id | string | 是 | 登录账号 |
+| cust_id | string | 是 | 客户号 |
+| fund_account_id | string | 是 | 资金账号 |
+| account_id_sh | string | 条件 | 上海证券账号（至少需要上海或深圳之一） |
+| account_id_sz | string | 条件 | 深圳证券账号（至少需要上海或深圳之一） |
+| branch_id | string | 是 | 营业部代码 |
+| password | string | 是 | 交易密码 |
 
 #### 性能统计配置（performance）
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |-------|------|------|--------|------|
-| `enabled` | boolean | 否 | `false` | 是否启用性能统计 |
-| `report_interval_ms` | integer | 否 | `1000` | 性能报告间隔（毫秒） |
-| `enable_latency_stats` | boolean | 否 | `false` | 是否启用延迟统计 |
+| enabled | boolean | 否 | false | 是否启用性能统计 |
+| report_interval_ms | integer | 否 | 1000 | 性能报告间隔（毫秒） |
+| enable_latency_stats | boolean | 否 | false | 是否启用延迟统计 |
 
 ### 数据输出配置（data）
 
@@ -518,10 +518,10 @@ LOG_FLUSH_LEVEL=debug
 
 ### 注意事项
 
-1. **登录模式**：根据券商要求选择 `login_mode`，常用值为 `1`（客户号）或 `2`（资金账号）
+1. **登录模式**：根据券商要求选择 login_mode，常用值为 1（客户号）或 2（资金账号）
 2. **账户验证**：系统会验证账户配置的完整性，至少需要配置上海或深圳一个证券账号
 3. **密码安全**：不使用硬编码密码或保证生产环境跟外网隔离，控制访问权限
-4. **回调模式**：交易系统强烈建议使用 `callback_mode: true` 以接收实时回报
+4. **回调模式**：交易系统强烈建议使用 callback_mode: true 以接收实时回报
 5. **性能监控**：建议启用性能统计以监控交易延迟
 
 ---
@@ -544,9 +544,9 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 必填 | 默认值 | 说明 |
 |-------|------|------|--------|------|
-| `strategies` | array | 是 | - | 策略实例配置数组 |
-| `cores` | array | 否 | `[]` | CPU 绑核配置，空数组表示不绑核 |
-| `thread_count` | integer | 否 | 硬件并发数 | 策略线程池大小 |
+| strategies | array | 是 | - | 策略实例配置数组 |
+| cores | array | 否 | [] | CPU 绑核配置，空数组表示不绑核 |
+| thread_count | integer | 否 | 硬件并发数 | 策略线程池大小 |
 
 ### 策略实例配置（strategies）
 
@@ -568,20 +568,20 @@ LOG_FLUSH_LEVEL=debug
 
 | 配置项 | 类型 | 说明 |
 |-------|------|------|
-| `account_id` | string | 关联的交易账户 ID（资金账号或客户号） |
-| `enable_performance_logging` | boolean | 是否启用性能日志 |
-| `performance_sample_count` | integer | 性能采样数量 |
+| account_id | string | 关联的交易账户 ID（资金账号或客户号） |
+| enable_performance_logging | boolean | 是否启用性能日志 |
+| performance_sample_count | integer | 性能采样数量 |
 
 #### 止盈止损策略配置（StopProfitLossStrategy）
 
 | 配置项 | 类型 | 必填 | 说明 |
 |-------|------|------|------|
-| `monitor_stocks` | array | 是 | 监控的股票代码列表 |
-| `profit_threshold` | number | 是 | 止盈阈值（百分比） |
-| `loss_threshold` | number | 是 | 止损阈值（百分比） |
-| `order_timeout_seconds` | integer | 否 | 订单超时时间（秒） |
-| `order_quantity` | integer | 是 | 下单数量（股） |
-| `account_id` | string | 是 | 关联的账户 ID |
+| monitor_stocks | array | 是 | 监控的股票代码列表 |
+| profit_threshold | number | 是 | 止盈阈值（百分比） |
+| loss_threshold | number | 是 | 止损阈值（百分比） |
+| order_timeout_seconds | integer | 否 | 订单超时时间（秒） |
+| order_quantity | integer | 是 | 下单数量（股） |
+| account_id | string | 是 | 关联的账户 ID |
 
 ### 完整配置示例
 
@@ -712,8 +712,8 @@ LOG_FLUSH_LEVEL=debug
 
 1. **策略 ID**：必须全局唯一，用于标识和管理策略实例
 2. **策略模块**：必须是已注册的策略类名，区分大小写
-3. **账户关联**：`account_id` 必须与交易配置中的账户 ID 匹配
-4. **线程池大小**：`thread_count` 应根据 CPU 核心数和策略复杂度调整
+3. **账户关联**：account_id 必须与交易配置中的账户 ID 匹配
+4. **线程池大小**：thread_count 应根据 CPU 核心数和策略复杂度调整
 5. **CPU 绑核**：生产环境建议绑核以提升性能，开发环境可不绑核
 6. **配置更新**：修改配置后需要重启系统或通过 API 动态加载
 
@@ -777,30 +777,30 @@ LOG_FLUSH_LEVEL=debug
 
 | 值 | 说明 |
 |----|------|
-| `sse` | 上海证券交易所 |
-| `szse` | 深圳证券交易所 |
+| sse | 上海证券交易所 |
+| szse | 深圳证券交易所 |
 
 ### 支持的数据类型
 
 | 值 | 说明 |
 |----|------|
-| `index` | 指数行情 |
-| `depth` | 十档行情 |
-| `entrust` | 委托队列 |
-| `trade` | 逐笔成交 |
-| `depth_fifty` | 五十档行情 |
+| index | 指数行情 |
+| depth | 十档行情 |
+| entrust | 委托队列 |
+| trade | 逐笔成交 |
+| depth_fifty | 五十档行情 |
 
 ### 登录模式说明
 
 | 值 | 说明 | 使用场景 |
 |----|------|---------|
-| `1` | 客户号（cust_id） | 大多数券商支持 |
-| `2` | 资金账号（fund_account_id） | 部分券商要求 |
+| 1 | 客户号（cust_id） | 大多数券商支持 |
+| 2 | 资金账号（fund_account_id） | 部分券商要求 |
 
 ### 数据输出类型
 
 | 类型 | 说明 | 适用场景 |
 |------|------|---------|
-| `shared_memory` | 共享内存 | 高性能进程间通信 |
-| `file` | 文件 | 数据持久化和回放 |
-| `udp` | UDP 广播 | 多进程数据分发 |
+| shared_memory | 共享内存 | 高性能进程间通信 |
+| file | 文件 | 数据持久化和回放 |
+| udp | UDP 广播 | 多进程数据分发 |

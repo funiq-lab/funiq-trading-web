@@ -42,7 +42,7 @@ const t = translateFor(locale);
     )
   }
   {!docconfig.hide_author && <h6 class="muted font-mono">{t("meta.by")} {author}</h6>}
-  <div class="prose pt-4">
+  <div class="prose pt-4 break-all">
     <slot />
   </div>
   <BacktoTop />

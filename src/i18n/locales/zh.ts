@@ -13,6 +13,7 @@ const CNLocale: I18nStrings = {
   ...baseStrings,
   'on_this_page': '本页内容',
   'search': '搜索',
+  'no_results_found': '未找到结果',
   docs: "文档",
   "paths.apis": "APIs",
   "paths.getting-started": "开始使用",

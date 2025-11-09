@@ -23,33 +23,33 @@ Environment variables are usually defined in a `.env` file which the system load
 
 | Variable | Type | Description | Default | Example |
 |---------|------|-------------|--------|--------|
-| `QUOTE_CONFIG_FILE` | string | Path to quote configuration file | - | `./quote_config.json` |
-| `TRADE_CONFIG_FILE` | string | Path to trade configuration file | - | `./trade_config.json` |
-| `STRATEGY_CONFIG_FILE` | string | Path to strategy configuration file | - | `./strategy_config.json` |
-| `SYSTEM_CONFIG_FILE` | string | Path to system configuration file | - | `./system_config.json` |
-| `FT_DB_PATH` | string | Path to the database file | - | `data/trading.db` |
-| `FT_DB_MIGRATION_CONFIG_PATH` | string | Path to DB migration config | - | `migrations/migration.config.ini` |
+| QUOTE_CONFIG_FILE | string | Path to quote configuration file | - | ./quote_config.json |
+| TRADE_CONFIG_FILE | string | Path to trade configuration file | - | ./trade_config.json |
+| STRATEGY_CONFIG_FILE | string | Path to strategy configuration file | - | ./strategy_config.json |
+| SYSTEM_CONFIG_FILE | string | Path to system configuration file | - | ./system_config.json |
+| FT_DB_PATH | string | Path to the database file | - | data/trading.db |
+| FT_DB_MIGRATION_CONFIG_PATH | string | Path to DB migration config | - | migrations/migration.config.ini |
 
 ### Network configuration
 
 | Variable | Type | Description | Default | Example |
 |---------|------|-------------|--------|--------|
-| `HTTP_SERVER_ADDRESS` | string | HTTP server listen address | `0.0.0.0` | `0.0.0.0` |
-| `HTTP_SERVER_PORT` | integer | HTTP server listen port | `8080` | `8080` |
-| `HTTP_SERVER_THREADS` | integer | Number of worker threads for HTTP server | `4` | `4` |
+| HTTP_SERVER_ADDRESS | string | HTTP server listen address | 0.0.0.0 | 0.0.0.0 |
+| HTTP_SERVER_PORT | integer | HTTP server listen port | 8080 | 8080 |
+| HTTP_SERVER_THREADS | integer | Number of worker threads for HTTP server | 4 | 4 |
 
 ### Logging configuration
 
 | Variable | Type | Description | Default | Example |
 |---------|------|-------------|--------|--------|
-| `LOG_ENABLED` | boolean | Enable logging | `true` | `true` |
-| `LOG_LEVEL` | string | Log level | `debug` | `debug`, `info`, `warn`, `error` |
-| `LOG_CONSOLE` | boolean | Output logs to console | `true` | `true` |
-| `LOG_FILE_ENABLED` | boolean | Write logs to files | `true` | `true` |
-| `LOG_ASYNC` | boolean | Use asynchronous logging | `true` | `true` |
-| `LOG_FILE_DIR` | string | Log directory | `logs` | `logs` |
-| `LOG_MAX_FILES` | integer | Max number of log files to keep | `30` | `30` |
-| `LOG_FLUSH_LEVEL` | string | Flush log level | `debug` | `debug`, `info`, `warn`, `error` |
+| LOG_ENABLED | boolean | Enable logging | true | true |
+| LOG_LEVEL | string | Log level | debug | debug, info, warn, error |
+| LOG_CONSOLE | boolean | Output logs to console | true | true |
+| LOG_FILE_ENABLED | boolean | Write logs to files | true | true |
+| LOG_ASYNC | boolean | Use asynchronous logging | true | true |
+| LOG_FILE_DIR | string | Log directory | logs | logs |
+| LOG_MAX_FILES | integer | Max number of log files to keep | 30 | 30 |
+| LOG_FLUSH_LEVEL | string | Flush log level | debug | debug, info, warn, error |
 
 ### Example .env
 
@@ -98,9 +98,9 @@ The system configuration file is used to define trading time rules, holidays, tr
 
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
-| `trading_time` | array | No | Array of trading time intervals. Each item is `[startHour, startMinute, endHour, endMinute]`. If omitted, the system defaults to 24/7 mode. |
-| `holiday` | array | No | Array of holiday dates in `YYYY-MM-DD`. If omitted, holidays are ignored. |
-| `trading_weekdays` | array | No | Trading weekdays, 1-7 represent Mon-Sun. Defaults to full week `[1,2,3,4,5,6,7]`. |
+| trading_time | array | No | Array of trading time intervals. Each item is [startHour, startMinute, endHour, endMinute]. If omitted, the system defaults to 24/7 mode. |
+| holiday | array | No | Array of holiday dates in YYYY-MM-DD. If omitted, holidays are ignored. |
+| trading_weekdays | array | No | Trading weekdays, 1-7 represent Mon-Sun. Defaults to full week [1,2,3,4,5,6,7]. |
 
 ### Run modes
 
@@ -193,11 +193,11 @@ Quote configuration defines data sources, subscription rules, performance settin
 
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
-| `id` | string | Yes | Unique parser identifier |
-| `active` | boolean | Yes | Enable the parser |
-| `module` | string | Yes | Parser module name (dynamic library) |
-| `config` | object | Yes | Parser-specific configuration |
-| `data` | array | No | Data output configuration |
+| id | string | Yes | Unique parser identifier |
+| active | boolean | Yes | Enable the parser |
+| module | string | Yes | Parser module name (dynamic library) |
+| config | object | Yes | Parser-specific configuration |
+| data | array | No | Data output configuration |
 
 ### Parser config (config)
 
@@ -205,53 +205,53 @@ Quote configuration defines data sources, subscription rules, performance settin
 
 | Field | Type | Required | Default | Description |
 |------|------|----------|--------|-------------|
-| `callback_mode` | boolean | No | `false` | Use callback push mode |
-| `extended_config_file` | string | No | - | Extended config path (parser-specific) |
+| callback_mode | boolean | No | false | Use callback push mode |
+| extended_config_file | string | No | - | Extended config path (parser-specific) |
 
 #### Subscription (subscription)
 
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
-| `markets` | array | No | Market list, e.g., `"sse"`, `"szse"` |
-| `data_types` | array | No | Types: `index`, `depth`, `entrust`, `trade`, `depth_fifty` |
-| `securities` | array | No | List of symbols (strings or objects) |
+| markets | array | No | Market list, e.g., "sse", "szse" |
+| data_types | array | No | Types: index, depth, entrust, trade, depth_fifty |
+| securities | array | No | List of symbols (strings or objects) |
 
 #### Performance settings
 
 | Field | Type | Required | Default | Description |
 |------|------|----------|--------|-------------|
-| `enabled` | boolean | No | `false` | Enable performance stats |
-| `report_interval_ms` | integer | No | `5000` | Report interval in ms |
-| `enable_latency_stats` | boolean | No | `false` | Enable latency stats |
-| `enable_throughput_stats` | boolean | No | `false` | Enable throughput stats |
+| enabled | boolean | No | false | Enable performance stats |
+| report_interval_ms | integer | No | 5000 | Report interval in ms |
+| enable_latency_stats | boolean | No | false | Enable latency stats |
+| enable_throughput_stats | boolean | No | false | Enable throughput stats |
 
 #### Mock settings
 
 | Field | Type | Required | Default | Description |
 |------|------|----------|--------|-------------|
-| `enabled` | boolean | No | `false` | Enable mock mode |
-| `mock_data_file` | string | No | - | Path to mock data (binary) |
-| `loop_replay` | boolean | No | `true` | Loop replay data |
-| `csv_mode` | boolean | No | `false` | Use CSV mode |
-| `csv_files` | object | No | - | CSV file paths |
+| enabled | boolean | No | false | Enable mock mode |
+| mock_data_file | string | No | - | Path to mock data (binary) |
+| loop_replay | boolean | No | true | Loop replay data |
+| csv_mode | boolean | No | false | Use CSV mode |
+| csv_files | object | No | - | CSV file paths |
 
 ##### CSV files structure
 
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
-| `depth` | string | No | 10-level depth CSV path |
-| `index` | string | No | Index CSV path |
-| `entrust` | string | No | Entrust queue CSV path |
-| `trade` | string | No | Tick/trade CSV path |
-| `depth_fifty` | string | No | 50-level depth CSV path |
+| depth | string | No | 10-level depth CSV path |
+| index | string | No | Index CSV path |
+| entrust | string | No | Entrust queue CSV path |
+| trade | string | No | Tick/trade CSV path |
+| depth_fifty | string | No | 50-level depth CSV path |
 
 ### Data output (data)
 
 | Field | Type | Required | Description |
 |------|------|----------|-------------|
-| `type` | string | Yes | Output type: `shared_memory`, `file`, `udp` |
-| `active` | boolean | Yes | Enable output |
-| `config` | object | No | Output-specific config |
+| type | string | Yes | Output type: shared_memory, file, udp |
+| active | boolean | Yes | Enable output |
+| config | object | No | Output-specific config |
 
 #### Shared memory output example
 
@@ -666,25 +666,25 @@ If validation fails, the system prints detailed errors and refuses to start.
 
 | Value | Description |
 |------|-------------|
-| `sse` | Shanghai Stock Exchange |
-| `szse` | Shenzhen Stock Exchange |
+| sse | Shanghai Stock Exchange |
+| szse | Shenzhen Stock Exchange |
 
 ### Supported data types
 
 | Value | Description |
 |------|-------------|
-| `index` | Index data |
-| `depth` | 10-level depth |
-| `entrust` | Order queue |
-| `trade` | Tick/trade data |
-| `depth_fifty` | 50-level depth |
+| index | Index data |
+| depth | 10-level depth |
+| entrust | Order queue |
+| trade | Tick/trade data |
+| depth_fifty | 50-level depth |
 
 ### Login modes
 
 | Value | Description | Typical use |
 |------:|------------:|-----------:|
-| `1` | cust_id | Most brokers |
-| `2` | fund_account_id | Some brokers require this |
+| 1 | cust_id | Most brokers |
+| 2 | fund_account_id | Some brokers require this |
 
 ### Output types
 
