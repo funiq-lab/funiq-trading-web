@@ -381,7 +381,76 @@ services.strategy.last_error | string | 最后错误信息
 
 ---
 
-### 5. 查询所有账户信息
+### 5. 获取日志
+
+`GET` /system/logs
+
+获取指定日期和日志类型的日志内容。
+
+#### 请求头
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+Content-Type | string | 是 | **固定值**："application/json"
+
+#### 查询参数
+
+名称 | 类型 | 必填 | 描述
+---|---|---|---
+date | string | 是 | 日期，格式为 YYYY-MM-DD<br />**示例值**："2024-01-15"
+logger | string | 是 | 日志名称：quote（行情）、scheduler（调度器）、server（服务器）、strategy（策略）、trade（交易）
+
+#### 请求示例
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/logs?date=2024-01-15&logger=trade' \
+--header 'Content-Type: application/json'
+```
+
+#### 响应
+
+##### 响应体
+
+名称 | 类型 | 描述
+---|---|---
+code | int | 错误码，0 表示成功
+msg | string | 响应消息
+data | object | 日志数据
+date | string | 请求的日期
+logger | string | 日志名称
+logs | string | 日志内容（如无日志则为空字符串）
+
+##### 响应体示例（有日志）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "date": "2024-01-15",
+    "logger": "trade",
+    "logs": "[2024-01-15 09:30:01] INFO: 交易服务已启动\n[2024-01-15 09:30:05] INFO: 账户登录成功: 123456\n[2024-01-15 09:31:00] INFO: 订单已提交: order_id=20001"
+  }
+}
+```
+
+##### 响应体示例（无日志）
+
+```json
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "date": "2024-01-15",
+    "logger": "trade",
+    "logs": "No logs found for the specified date"
+  }
+}
+```
+
+---
+
+### 6. 查询所有账户信息
 
 `GET` /system/accounts
 

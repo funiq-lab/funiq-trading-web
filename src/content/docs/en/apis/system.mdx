@@ -381,7 +381,76 @@ services.strategy.last_error | string | Last error message
 
 ---
 
-### 5. List all accounts
+### 5. Get logs
+
+`GET` /system/logs
+
+Retrieve log content for a specified date and logger.
+
+#### Request headers
+
+Name | Type | Required | Description
+---|---|---|---
+Content-Type | string | yes | **Fixed value**: "application/json"
+
+#### Query parameters
+
+Name | Type | Required | Description
+---|---|---|---
+date | string | yes | Date in YYYY-MM-DD format<br />**Example**: "2024-01-15"
+logger | string | yes | Logger name: quote, scheduler, server, strategy, or trade
+
+#### Example request
+
+```bash
+curl --location --request GET 'http://localhost:8080/system/logs?date=2024-01-15&logger=trade' \
+--header 'Content-Type: application/json'
+```
+
+#### Response
+
+##### Response fields
+
+Name | Type | Description
+---|---|---
+code | int | Error code, 0 means success
+msg | string | Response message
+data | object | Log data
+date | string | Requested date
+logger | string | Logger name
+logs | string | Log content
+
+##### Response example (logs found)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"date": "2024-01-15",
+		"logger": "trade",
+		"logs": "[2024-01-15 09:30:01] INFO: Trade service started\n[2024-01-15 09:30:05] INFO: Account logged in: 123456\n[2024-01-15 09:31:00] INFO: Order submitted: order_id=20001"
+	}
+}
+```
+
+##### Response example (no logs)
+
+```json
+{
+	"code": 0,
+	"msg": "success",
+	"data": {
+		"date": "2024-01-15",
+		"logger": "trade",
+		"logs": "No logs found for the specified date"
+	}
+}
+```
+
+---
+
+### 6. List all accounts
 
 `GET` /system/accounts
 
