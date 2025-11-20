@@ -601,7 +601,7 @@ typedef struct {
     OrderType order_type;           // 订单类型
     OrderSign sign;                 // 订单标识
     OrderStatus status;             // 订单状态
-    char status_msg[128];           // 状态描述
+    char status_msg[256];           // 状态描述
     
     double price;                   // 委托价格（元）
     uint64_t qty;                   // 委托数量（股）

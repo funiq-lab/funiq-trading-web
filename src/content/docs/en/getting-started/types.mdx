@@ -601,7 +601,7 @@ typedef struct {
     OrderType order_type;           // Order type
     OrderSign sign;                 // Order sign
     OrderStatus status;             // Order status
-    char status_msg[128];           // Status message
+    char status_msg[256];           // Status message
     
     double price;                   // Order price
     uint64_t qty;                   // Order quantity
