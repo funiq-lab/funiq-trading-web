@@ -41,3 +41,6 @@ server.config
 # cache directories
 .cache/
 .temp/
+
+# Cloudflare local state
+.wrangler/

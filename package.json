@@ -8,13 +8,14 @@
     "type": "git",
     "url": "https://github.com/funiq-lab/funiq-trading-web"
   },
-  "homepage": "https://www.funiqlab.com/",
+  "homepage": "https://funiq-trading.funiqlab.com/",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "deploy": "pnpm build && npx wrangler@4.45.0 pages deploy dist --project-name funiq-trading-web --branch main"
   },
   "keywords": [
     "trading system",

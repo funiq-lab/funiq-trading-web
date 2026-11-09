@@ -2,7 +2,7 @@ import type { SocialObjects } from "@/lib/types";
 import { DEFAULT_LOCALE, type LocaleKey } from "./i18n/config";
 
 export const SITE = {
-  website: "https://www.funiq-trading.funiqlab.com",
+  website: "https://funiq-trading.funiqlab.com",
   author: "FuniqLab",
   desc: "A Trading system written in C++",
   title: "Funiq Trading",

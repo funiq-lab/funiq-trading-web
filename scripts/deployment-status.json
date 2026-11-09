@@ -1,37 +1,27 @@
 {
   "project": "funiq-trading-web",
-  "version": "0.0.1",
   "deployment": {
-    "target_directory": "/var/www/funiq-trading-web",
-    "backup_directory": "/var/www/backup",
-    "web_user": "www-data",
-    "domain": "https://www.funiq-trading.funiqlab.com",
+    "provider": "Cloudflare Pages",
+    "project_name": "funiq-trading-web",
+    "account_id": "5c389ce6321e3c9ce44db2c47cdceee2",
+    "domain": "https://funiq-trading.funiqlab.com",
+    "pages_url": "https://funiq-trading-web.pages.dev",
     "build_command": "pnpm build",
-    "deploy_script": "./scripts/deploy.sh"
+    "output_directory": "dist",
+    "deploy_command": "pnpm run deploy"
   },
   "ci_cd": {
     "platform": "GitHub Actions",
     "workflow_file": ".github/workflows/deploy.yml",
-    "trigger": ["push to main/master", "pull request"],
-    "required_secrets": [
-      "SERVER_HOST",
-      "SERVER_USER", 
-      "SERVER_SSH_KEY",
-      "SERVER_PORT"
+    "mode": "build-validation-only",
+    "publishing": "Manual Wrangler CLI deployment; no Cloudflare token stored in GitHub."
+  },
+  "legacy": {
+    "provider": "AWS / Nginx",
+    "status": "retired",
+    "scripts": [
+      "scripts/deploy.sh",
+      "scripts/nginx.conf.template"
     ]
-  },
-  "monitoring": {
-    "log_paths": [
-      "/var/log/nginx/funiq-trading-web.access.log",
-      "/var/log/nginx/funiq-trading-web.error.log"
-    ],
-    "health_check": "curl -I https://www.funiq-trading.funiqlab.com",
-    "files_check": "ls -la /var/www/funiq-trading-web/"
-  },
-  "commands": {
-    "deploy": "./scripts/deploy.sh deploy",
-    "rollback": "./scripts/deploy.sh rollback", 
-    "status": "./scripts/deploy.sh status",
-    "validate": "./scripts/deploy.sh validate"
   }
 }

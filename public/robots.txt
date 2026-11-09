@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.funiq-trading.funiqlab.com/sitemap-index.xml
+Sitemap: https://funiq-trading.funiqlab.com/sitemap-index.xml

@@ -10,7 +10,7 @@ import sitemap from "@astrojs/sitemap";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://www.funiq-trading.funiqlab.com",
+  site: "https://funiq-trading.funiqlab.com",
   markdown: {
     smartypants: true,
     syntaxHighlight: "shiki",
