@@ -7,7 +7,7 @@ export const SITE = {
   desc: "A Trading system written in C++",
   title: "Funiq Trading",
   ogImage: "og-image.png",
-  repo: "https://github.com/funiq-lab/funiq-trading-web",
+  repo: "https://github.com/funiq-lab/funiq-trading",
 };
 
 export const menuItems: { titleKey: string; href: string }[] = [

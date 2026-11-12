@@ -35,6 +35,10 @@ export default defineConfig({
     defaultLocale: DEFAULT_LOCALE,
   },
   integrations: [
+    mermaid({
+      theme: "base",
+      autoTheme: true,
+    }),
     react(),
     tailwind({
       applyBaseStyles: false,
@@ -43,9 +47,5 @@ export default defineConfig({
       gfm: true,
     }),
     sitemap(),
-    mermaid({
-      theme: "base",
-      autoTheme: true,
-    }),
   ],
 });
