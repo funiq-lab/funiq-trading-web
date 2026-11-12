@@ -4,7 +4,7 @@ export function Copy() {
   useEffect(() => {
     function attachCopyButtons() {
       let copyButtonLabel = "Copy";
-      let codeBlocks = Array.from(document.querySelectorAll("pre"));
+      let codeBlocks = Array.from(document.querySelectorAll("pre:not(.mermaid)"));
 
       for (let codeBlock of codeBlocks) {
         let wrapper = document.createElement("div");
