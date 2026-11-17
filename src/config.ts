@@ -67,14 +67,8 @@ export const Socials: SocialObjects = [
   },
   {
     name: "Twitter",
-    href: "https://x.com/FuniqLab",
+    href: "https://x.com/yellin__",
     linkTitle: `${SITE.title} on X`,
-    active: true,
-  },
-  {
-    name: "Discord",
-    href: "https://discord.gg/YzhKmPZy",
-    linkTitle: `${SITE.title} on Discord`,
     active: true,
   },
 ];
