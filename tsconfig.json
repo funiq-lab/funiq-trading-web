@@ -12,5 +12,9 @@
         "src/config.ts"
       ]
     }
-  }
+  },
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

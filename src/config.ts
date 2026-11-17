@@ -21,6 +21,11 @@ export const menuItems: { titleKey: string; href: string }[] = [
 export const sideNavMenuOrder: string[] = [
   "getting-started",
   "getting-started/introduction.mdx",
+  "getting-started/mock-demo.mdx",
+  "getting-started/mock-core.mdx",
+  "getting-started/cpp-native.mdx",
+  "getting-started/python-c-api.mdx",
+  "getting-started/http-web.mdx",
   "getting-started/architecture.mdx",
   "getting-started/configuration.mdx",
   "getting-started/types.mdx",
